@@ -336,6 +336,18 @@ class Connection
 					throw new ClientError($body->error, $status);
 				}
 
+				if (is_object($body) && property_exists($body, 'errors')) {
+                                        if (is_array($body->errors)) {
+                                                $error = $body->errors[0];
+                                        } else {
+                                                $error = $body->errors;
+                                        }
+
+                                        if (is_object($error) && property_exists($error, 'title')) {
+                                                throw new ClientError($error->title, $status);
+                                        }
+                                }
+
 				throw new ClientError($body, $status);
 			} else {
 				$this->lastError = $body;
