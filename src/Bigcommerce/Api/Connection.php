@@ -489,14 +489,14 @@ class Connection
 	 * Make an HTTP POST request to the specified endpoint.
 	 *
 	 * @param string $url
-	 * @param array $body
+	 * @param mixed $body
 	 * @return mixed
 	 *
 	 * @throws ClientError
 	 * @throws ServerError
 	 * @throws NetworkError
 	 */
-	public function post(string $url, array $body) : mixed
+	public function post(string $url, mixed $body) : mixed
 	{
 		$contentType = $this->getContentType();
 		$this->addHeader('Content-Type', $contentType);
@@ -607,14 +607,14 @@ class Connection
 	 * API requires it to send data.
 	 *
 	 * @param string $url
-	 * @param array $body
+	 * @param mixed $body
 	 * @return mixed
 	 *
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public function put(string $url, array $body) : mixed
+	public function put(string $url, mixed $body) : mixed
 	{
 		$this->addHeader('Content-Type', $this->getContentType());
 

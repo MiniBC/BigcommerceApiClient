@@ -1,9 +1,8 @@
 <?php
-
 namespace Bigcommerce\Api;
 
 use Firebase\JWT\JWT;
-use \Exception as Exception;
+use \{Exception, stdClass, DateTime};
 
 /**
  * Bigcommerce API Client.
@@ -128,7 +127,7 @@ class Client
 		self::$auth_token = $settings['auth_token'];
 		self::$store_hash = $settings['store_hash'];
 
-		self::$client_secret = isset($settings['client_secret']) ? $settings['client_secret'] : null;
+		self::$client_secret = $settings['client_secret'] ?? null;
 
 		self::$api_path = self::$api_url . sprintf(self::$stores_prefix, self::$store_hash, self::$version);
 		self::$connection = false;
@@ -141,7 +140,7 @@ class Client
 	 * Accepts both OAuth and Basic Auth credentials
 	 *
 	 * @param array $settings
-	 * @throws \Exception
+	 * @throws Exception
 	 */
 	public static function configure(array $settings)
 	{
@@ -354,7 +353,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createResource(string $path, $object) : mixed
+	public static function createResource(string $path, mixed $object) : mixed
 	{
 		if (is_array($object)) $object = (object)$object;
 
@@ -372,7 +371,7 @@ class Client
 	 * @throws ServerError
 	 * @throws NetworkError
 	 */
-	public static function updateResource(string $path, $object)
+	public static function updateResource(string $path, mixed $object) : mixed
 	{
 		if (is_array($object)) $object = (object)$object;
 
@@ -398,30 +397,30 @@ class Client
 	 * Internal method to wrap items in a collection to resource classes.
 	 *
 	 * @param string $resource name of the resource class
-	 * @param array $object object collection
-	 * @return array|string
+	 * @param mixed $object object collection
+	 * @return array|string|bool
 	 */
-	private static function mapCollection(string $resource, $object) : array|string
+	private static function mapCollection(string $resource, mixed $object) : array|string|bool
 	{
 		if ($object == false || is_string($object)) return $object;
 
 		if (!is_array($object)) {
-			$object = array( $object );
+			$object = [ $object ];
 		}
 
 		$baseResource = __NAMESPACE__ . '\\' . $resource;
 		self::$resource = (class_exists($baseResource)) ?  $baseResource  :  'Bigcommerce\\Api\\Resources\\' . $resource;
 
-		return array_map(array('self', 'mapCollectionObject'), $object);
+		return array_map(['self', 'mapCollectionObject'], $object);
 	}
 
-	/**
-	 * Callback for mapping collection objects resource classes.
-	 *
-	 * @param \stdClass $object
-	 * @return Resource
-	 */
-	private static function mapCollectionObject($object) : Resource
+    /**
+     * Callback for mapping collection objects resource classes.
+     *
+     * @param stdClass[]|stdClass $object
+     * @return Resource
+     */
+	private static function mapCollectionObject(array|stdClass $object) : Resource
 	{
 		$class = self::$resource;
 
@@ -432,10 +431,10 @@ class Client
 	 * Map a single object to a resource class.
 	 *
 	 * @param string $resource name of the resource class
-	 * @param \stdClass $object
-	 * @return Resource|string
+	 * @param mixed $object
+	 * @return Resource|string|bool
 	 */
-	private static function mapResource(string $resource, $object) : Resource|string
+	private static function mapResource(string $resource, mixed $object) : Resource|string|bool
 	{
 		if ($object == false || is_string($object)) return $object;
 
@@ -448,13 +447,13 @@ class Client
 	/**
 	 * Swaps a temporary access code for a long expiry auth token.
 	 *
-	 * @param \stdClass $object
-	 * @return \stdClass
+	 * @param mixed $object
+	 * @return stdClass
 	 * @throws ClientError
 	 * @throws ServerError
 	 * @throws NetworkError
 	 */
-	public static function getAuthToken($object) : mixed
+	public static function getAuthToken(mixed $object) : mixed
 	{
 		$context = array_merge(array(
 			'grant_type' => 'authorization_code'
@@ -508,18 +507,18 @@ class Client
 	/**
 	 * Pings the time endpoint to test the connection to a store.
 	 *
-	 * @return \DateTime|string
+	 * @return DateTime|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getTime() : \DateTime|string
+	public static function getTime() : DateTime|string
 	{
 		$response = self::connection()->get(self::$api_path . '/time');
 
 		if ($response == false || is_string($response)) return $response;
 
-		return new \DateTime("@{$response->time}");
+		return new DateTime("@$response->time");
 	}
 
 	/**
@@ -566,7 +565,7 @@ class Client
 	public static function getProductConfigurableFields(int $id, array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
-		return self::getCollection('/products/'.$id.'/configurablefields', "ProductConfigurableField");
+		return self::getCollection('/products/'.$id.'/configurablefields' . $filter->toQuery(), "ProductConfigurableField");
 	}
 
 	/**
@@ -626,7 +625,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createProductImage(int $productId, $object) : mixed
+	public static function createProductImage(int $productId, mixed $object) : mixed
 	{
 		return self::createResource('/products/' . $productId . '/images', $object);
 	}
@@ -642,7 +641,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateProductImage(int $productId, int $imageId, $object) : mixed
+	public static function updateProductImage(int $productId, int $imageId, mixed $object) : mixed
 	{
 		return self::updateResource('/products/' . $productId . '/images/' . $imageId, $object);
 	}
@@ -666,16 +665,14 @@ class Client
 	 * Gets collection of images for a product.
 	 *
 	 * @param int $id product id
-	 * @return mixed array|string list of products or XML string if useXml is true
+	 * @return array|string list of products or XML string if useXml is true
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
-     *
-     * @todo ...is this even working
 	 */
-	public static function getProductImages(int $id)
+	public static function getProductImages(int $id) : array|string
 	{
-		return self::getResource('/products/' . $id . '/images/', 'ProductImage');
+		return self::getCollection('/products/' . $id . '/images', 'ProductImage');
 	}
 
 	/**
@@ -895,7 +892,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createProductCustomField(int $productId, $object) : mixed
+	public static function createProductCustomField(int $productId, mixed $object) : mixed
 	{
 		return self::createResource('/products/' . $productId . '/customfields', $object);
 	}
@@ -911,7 +908,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateProductCustomField(int $productId, int $id, $object) : mixed
+	public static function updateProductCustomField(int $productId, int $id, mixed $object) : mixed
 	{
 		return self::updateResource('/products/' . $productId . '/customfields/' . $id, $object);
 	}
@@ -998,7 +995,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createProduct($object) : mixed
+	public static function createProduct(mixed $object) : mixed
 	{
 		return self::createResource('/products', $object);
 	}
@@ -1013,7 +1010,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateProduct(int $id, $object) : mixed
+	public static function updateProduct(int $id, mixed $object) : mixed
 	{
 		return self::updateResource('/products/' . $id, $object);
 	}
@@ -1050,13 +1047,13 @@ class Client
 	/**
 	 * create options
 	 *
-	 * @param \stdClass $object
+	 * @param stdClass $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createOptions($object) : mixed
+	public static function createOptions(mixed $object) : mixed
 	{
 		return self::createResource('/options', $object);
 	}
@@ -1214,7 +1211,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createCategory($object) : mixed
+	public static function createCategory(mixed $object) : mixed
 	{
 		return self::createResource('/categories/', $object);
 	}
@@ -1229,7 +1226,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateCategory(int $id, $object) : mixed
+	public static function updateCategory(int $id, mixed $object) : mixed
 	{
 		return self::updateResource('/categories/' . $id, $object);
 	}
@@ -1301,7 +1298,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createBrand($object) : mixed
+	public static function createBrand(mixed $object) : mixed
 	{
 		return self::createResource('/brands', $object);
 	}
@@ -1316,7 +1313,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateBrand(int $id, $object) : mixed
+	public static function updateBrand(int $id, mixed $object) : mixed
 	{
 		return self::updateResource('/brands/' . $id, $object);
 	}
@@ -1395,13 +1392,13 @@ class Client
 	/**
 	 * Create an order
 	 *
-	 * @param \stdClass $object
+	 * @param stdClass $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 **/
-	public static function createOrder($object) : mixed
+	public static function createOrder(mixed $object) : mixed
 	{
 		return self::createResource('/orders', $object);
 	}
@@ -1424,13 +1421,12 @@ class Client
 	/**
 	 * The total number of order coupons in the collection.
 	 *
-	 * @param array|int|bool|Filter $filter
 	 * @return int|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getOrderCouponsCount(array|int|bool|Filter $filter = false) : int|string
+	public static function getOrderCouponsCount() : int|string
 	{
 		$page = 1;
 		$filter = Filter::create([ 'page' => $page, 'limit' => 250 ]);
@@ -1607,7 +1603,7 @@ class Client
 		$response = self::getV3Resource('/customers/attribute-values' . $filter->toQuery());
 
         if ($isDataOnly) {
-			if ($response !== false && !empty($response->data)) {
+			if (!empty($response->data)) {
 				return self::mapCollection('Resource', $response->data);
 			}
 		}
@@ -1693,7 +1689,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createCustomer($object) : mixed
+	public static function createCustomer(mixed $object) : mixed
 	{
 		return self::createResource('/customers', $object);
 	}
@@ -1708,7 +1704,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateCustomer(int $id, $object) : mixed
+	public static function updateCustomer(int $id, mixed $object) : mixed
 	{
 		return self::updateResource('/customers/' . $id, $object);
 	}
@@ -1810,7 +1806,7 @@ class Client
      * @throws NetworkError
      * @throws ServerError
      */
-	public static function createOptionsets($object) : mixed
+	public static function createOptionsets(mixed $object) : mixed
 	{
 		return self::createResource('/optionsets', $object);
 	}
@@ -1825,9 +1821,9 @@ class Client
      * @throws NetworkError
      * @throws ServerError
      */
-	public static function createOptionsetsOptions($object, int $id) : mixed
+	public static function createOptionsetsOptions(mixed $object, int $id) : mixed
 	{
-		return self::createResource("/optionsets/{$id}/options", $object);
+		return self::createResource("/optionsets/$id/options", $object);
 	}
 
 
@@ -1943,13 +1939,13 @@ class Client
 	 * Create a SKU
 	 *
 	 * @param int $productId
-	 * @param $object
+	 * @param mixed $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createSku(int $productId, $object) : mixed
+	public static function createSku(int $productId, mixed $object) : mixed
 	{
 		return self::createResource('/products/' . $productId . '/skus', $object);
 	}
@@ -1958,13 +1954,13 @@ class Client
 	 * Update sku
 	 *
 	 * @param int $id
-	 * @param $object
+	 * @param mixed $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateSku(int $id, $object) : mixed
+	public static function updateSku(int $id, mixed $object) : mixed
 	{
 		return self::updateResource('/product/skus/' . $id, $object);
 	}
@@ -2014,13 +2010,13 @@ class Client
 	/**
 	 * Create coupon
 	 *
-	 * @param $object
+	 * @param mixed $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createCoupon($object) : mixed
+	public static function createCoupon(mixed $object) : mixed
 	{
 		return self::createResource('/coupons', $object);
 	}
@@ -2035,7 +2031,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateCoupon(int $id, $object) : mixed
+	public static function updateCoupon(int $id, mixed $object) : mixed
 	{
 		return self::updateResource('/coupons/' . $id, $object);
 	}
@@ -2103,26 +2099,11 @@ class Client
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
-     *
-     * @todo ...the api path is for customer groups
 	 */
 	public static function getRedirectsCount(array|int|bool|Filter $filter = false) : int|string
 	{
 		$filter = Filter::create($filter);
-		return self::getCount('/customer_groups/count');
-	}
-
-	/**
-	 * The request logs with usage history statistics.
-	 *
-	 * @return array|string
-	 * @throws ClientError
-	 * @throws NetworkError
-	 * @throws ServerError
-	 */
-	public static function getRequestLogs() : array|string
-	{
-		return self::getCollection('/requestlogs', 'RequestLog');
+		return self::getCount('/redirects/count' . $filter->toQuery());
 	}
 
 	/**
@@ -2173,7 +2154,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getShipment($orderId, $shipmentId) : Resource|string
+	public static function getShipment(int $orderId, int $shipmentId) : Resource|string
 	{
 		return self::getResource('/orders/' . $orderId . '/shipments/' . $shipmentId, 'Shipment');
 	}
@@ -2181,7 +2162,7 @@ class Client
 	/**
 	 * Get shipments for a given order
 	 *
-	 * @param $orderId
+	 * @param int $orderId
 	 * @param array|int|bool|Filter $filter
 	 * @return array|string
 	 * @throws ClientError
@@ -2191,22 +2172,22 @@ class Client
 	public static function getShipments(int $orderId, array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
-		return self::getCollection("/orders/{$orderId}/shipments" . $filter->toQuery(), 'Shipment');
+		return self::getCollection("/orders/$orderId/shipments" . $filter->toQuery(), 'Shipment');
 	}
 
 	/**
 	 * Create shipment
 	 *
-	 * @param $orderId
+	 * @param int $orderId
 	 * @param mixed $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createShipment(int $orderId, $object) : mixed
+	public static function createShipment(int $orderId, mixed $object) : mixed
 	{
-		return self::createResource("/orders/{$orderId}/shipments", $object);
+		return self::createResource("/orders/$orderId/shipments", $object);
 	}
 
 	/**
@@ -2222,7 +2203,7 @@ class Client
 	 */
 	public static function updateShipment(int $orderId, int $shipmentId, mixed $object) : mixed
 	{
-		return self::updateResource("/orders/{$orderId}/shipments/" . $shipmentId, $object);
+		return self::updateResource("/orders/$orderId/shipments/" . $shipmentId, $object);
 	}
 
 	/**
@@ -2237,7 +2218,7 @@ class Client
 	 */
 	public static function deleteShipment(int $orderId, int $shipmentId) : mixed
 	{
-		return self::deleteResource("/orders/{$orderId}/shipments/" . $shipmentId);
+		return self::deleteResource("/orders/$orderId/shipments/" . $shipmentId);
 	}
 
 	/**
@@ -2251,7 +2232,7 @@ class Client
 	 */
 	public static function deleteAllShipmentsForOrder(int $orderId) : mixed
 	{
-		return self::deleteResource("/orders/{$orderId}/shipments");
+		return self::deleteResource("/orders/$orderId/shipments");
 	}
 
 	/**
@@ -2263,7 +2244,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createCurrency($object) : mixed
+	public static function createCurrency(mixed $object) : mixed
 	{
 		return self::createResource('/currencies', $object);
 	}
@@ -2292,7 +2273,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateCurrency(int $id, $object) : mixed
+	public static function updateCurrency(int $id, mixed $object) : mixed
 	{
 		return self::updateResource('/currencies/' . $id, $object);
 	}
@@ -2342,8 +2323,8 @@ class Client
 	/**
 	 * get a specific webhook by id
 	 *
-	 * @params 	int 		$id 		webhook id
-	 * @return 	\stdClass 	$object
+	 * @params int $id webhook id
+	 * @return Resource|string $object
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
@@ -2355,35 +2336,35 @@ class Client
 
 	/**
 	 * create webhook
-	 * @param 	\stdClass 	$object 	webhook params
-	 * @return 	mixed
+	 * @param stdClass $object webhook params
+	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createWebhook($object) : mixed
+	public static function createWebhook(mixed $object) : mixed
 	{
 		return self::createResource('/hooks', $object);
 	}
 
 	/**
 	 * create a webhook
-	 * @param 	int 		$id 		webhook id
-	 * @param 	\stdClass 	$object 	webhook params
-	 * @return 	\stdClass
+	 * @param int $id webhook id
+	 * @param mixed $object webhook params
+	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateWebhook(int $id, $object) : mixed
+	public static function updateWebhook(int $id, mixed $object) : mixed
 	{
 		return self::updateResource('/hooks/' . $id, $object);
 	}
 
 	/**
 	 * delete a webhook
-	 * @param 	int 		$id 		webhook id
-	 * @return 	\stdClass
+	 * @param int $id webhook id
+	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
@@ -2423,13 +2404,13 @@ class Client
 	/**
 	 * Create a new content pages
 	 *
-	 * @param $object
+	 * @param mixed $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createPage($object) : mixed
+	public static function createPage(mixed $object) : mixed
 	{
 		return self::createResource('/pages', $object);
 	}
@@ -2438,13 +2419,13 @@ class Client
 	 * Update an existing content page
 	 *
 	 * @param int $pageId
-	 * @param $object
+	 * @param mixed $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updatePage(int $pageId, $object) : mixed
+	public static function updatePage(int $pageId, mixed $object) : mixed
 	{
 		return self::updateResource('/pages/' . $pageId, $object);
 	}
@@ -2466,13 +2447,13 @@ class Client
 	/**
 	 * Create a Gift Certificate
 	 *
-	 * @param array $object
+	 * @param mixed $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createGiftCertificate($object) : mixed
+	public static function createGiftCertificate(mixed $object) : mixed
 	{
 		return self::createResource('/gift_certificates', $object);
 	}
@@ -2510,13 +2491,13 @@ class Client
 	 * Update a Gift Certificate
 	 *
 	 * @param int $giftCertificateId
-	 * @param array $object
+	 * @param mixed $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateGiftCertificate(int $giftCertificateId, $object) : mixed
+	public static function updateGiftCertificate(int $giftCertificateId, mixed $object) : mixed
 	{
 		return self::updateResource('/gift_certificates/' . $giftCertificateId, $object);
 	}
@@ -2552,13 +2533,13 @@ class Client
 	 * Create Product Review
 	 *
 	 * @param int $productId
-	 * @param array $object
+	 * @param mixed $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createProductReview(int $productId, $object) : mixed
+	public static function createProductReview(int $productId, mixed $object) : mixed
 	{
 		return self::createResource('/products/' . $productId . '/reviews', $object);
 	}
@@ -2567,13 +2548,13 @@ class Client
 	 * Create Product Bulk Discount rules
 	 *
 	 * @param int $productId
-	 * @param array $object
+	 * @param mixed $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createProductBulkPricingRules(int $productId, $object) : mixed
+	public static function createProductBulkPricingRules(int $productId, mixed $object) : mixed
 	{
 		return self::createResource('/products/' . $productId . '/discount_rules', $object);
 	}
@@ -2581,13 +2562,13 @@ class Client
 	/**
 	 * Create a Marketing Banner
 	 *
-	 * @param array $object
+	 * @param mixed $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createMarketingBanner($object) : mixed
+	public static function createMarketingBanner(mixed $object) : mixed
 	{
 		return self::createResource('/banners', $object);
 	}
@@ -2636,13 +2617,13 @@ class Client
 	 * Update an existing banner
 	 *
 	 * @param int $bannerId
-	 * @param array $object
+	 * @param mixed $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateMarketingBanner(int $bannerId, $object) : mixed
+	public static function updateMarketingBanner(int $bannerId, mixed $object) : mixed
 	{
 		return self::updateResource('/banners/' . $bannerId, $object);
 	}
@@ -2651,13 +2632,13 @@ class Client
 	 * Add a address to the customer's address book.
 	 *
 	 * @param int $customerId
-	 * @param array $object
+	 * @param mixed $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createCustomerAddress($customerId, $object) : mixed
+	public static function createCustomerAddress(int $customerId, mixed $object) : mixed
 	{
 		return self::createResource('/customers/' . $customerId . '/addresses', $object);
 	}
@@ -2666,13 +2647,13 @@ class Client
 	 * Create a product rule
 	 *
 	 * @param int $productId
-	 * @param array $object
+	 * @param mixed $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createProductRule(int $productId, $object) : mixed
+	public static function createProductRule(int $productId, mixed $object) : mixed
 	{
 		return self::createResource('/products/' . $productId . '/rules', $object);
 	}
@@ -2680,13 +2661,13 @@ class Client
 	/**
 	 * Create a customer group.
 	 *
-	 * @param array $object
+	 * @param mixed $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createCustomerGroup($object) : mixed
+	public static function createCustomerGroup(mixed $object) : mixed
 	{
 		return self::createResource('/customer_groups', $object);
 	}
@@ -2748,13 +2729,13 @@ class Client
 	 * Return the option value object that was created.
 	 *
 	 * @param int $optionId
-	 * @param array $object
+	 * @param mixed $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createOptionValue(int $optionId, $object) : mixed
+	public static function createOptionValue(int $optionId, mixed $object) : mixed
 	{
 		return self::createResource('/options/' . $optionId . '/values', $object);
 	}
@@ -2777,13 +2758,13 @@ class Client
 	 *
 	 * @param int $optionId
 	 * @param int $optionValueId
-	 * @param array $object
+	 * @param mixed $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateOptionValue(int $optionId, int $optionValueId, $object) : mixed
+	public static function updateOptionValue(int $optionId, int $optionValueId, mixed $object) : mixed
 	{
 		return self::updateResource(
 			'/options/' . $optionId . '/values/' . $optionValueId,
@@ -2822,13 +2803,13 @@ class Client
 
 	/**
 	 * create blog post
-	 * @param \stdClass $object post params
+	 * @param mixed $object post params
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createBlogPost($object) : mixed
+	public static function createBlogPost(mixed $object) : mixed
 	{
 		return self::createResource('/blog/posts', $object);
 	}
@@ -2836,13 +2817,13 @@ class Client
 	/**
 	 * update blog post
 	 * @param int $id post id
-	 * @param  \stdClass $object post params
+	 * @param mixed $object post params
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateBlogPost(int $id, $object) : mixed
+	public static function updateBlogPost(int $id, mixed $object) : mixed
 	{
 		return self::updateResource('/blog/posts/' . $id, $object);
 	}
@@ -2889,8 +2870,8 @@ class Client
 	 * @throws ServerError
 	 * @throws NetworkError
 	 */
-	public static function deleteV3Resource($path) : mixed
-	{        
+	public static function deleteV3Resource(string $path) : mixed
+	{
         self::setVersion('v3');
 		$ret = self::deleteResource($path);
 
@@ -2903,13 +2884,13 @@ class Client
 	/**
 	 * create catalog
      * @param  string $catalogPath path of request
-	 * @param \stdClass $object catalog params
+	 * @param mixed $object catalog params
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createCatalog(string $catalogPath, $object) : mixed
+	public static function createCatalog(string $catalogPath, mixed $object) : mixed
 	{
         self::setVersion('v3');
         $ret = self::createResource('/catalog' . $catalogPath, $object);
@@ -2954,13 +2935,13 @@ class Client
 	/**
 	 * update catalog
 	 * @param string $catalogPath api endpoint
-	 * @param \stdClass $object catalog params
+	 * @param mixed $object catalog params
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateCatalog(string $catalogPath, $object) : mixed
+	public static function updateCatalog(string $catalogPath, mixed $object) : mixed
 	{
         self::setVersion('v3');
         $ret = self::updateResource('/catalog' . $catalogPath, $object);
@@ -2979,7 +2960,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteCatalog($catalogPath) : mixed
+	public static function deleteCatalog(string $catalogPath) : mixed
 	{
         return self::deleteV3Resource('/catalog' . $catalogPath);
 	}
@@ -2993,7 +2974,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createCatalogProduct($object) : mixed
+	public static function createCatalogProduct(mixed $object) : mixed
 	{
 		return self::createCatalog('/products', $object);
 	}
@@ -3029,13 +3010,13 @@ class Client
 	/**
 	 * update catalog product
 	 * @param int $id catalog product id
-	 * @param \stdClass $object catalog product params
+	 * @param mixed $object catalog product params
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateCatalogProduct(int $id, $object) : mixed
+	public static function updateCatalogProduct(int $id, mixed $object) : mixed
 	{
 		return self::updateCatalog('/products/' . $id, $object);
 	}
@@ -3081,7 +3062,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createCatalogBrand($object): mixed
+	public static function createCatalogBrand(mixed $object): mixed
 	{
 		return self::createCatalog('/brands', $object);
 	}
@@ -3116,21 +3097,21 @@ class Client
 
 	/**
 	 * update catalog brand
-	 * @param 	int 		$id 		catalog brand id
-	 * @param 	\stdClass 	$object 	catalog brand params
+	 * @param int $id catalog brand id
+	 * @param mixed	$object catalog brand params
 	 * @return 	mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateCatalogBrand(int $id, $object) : mixed
+	public static function updateCatalogBrand(int $id, mixed $object) : mixed
 	{
 		return self::updateCatalog('/brands/' . $id, $object);
 	}
 
 	/**
 	 * delete a catalog brand
-     * @param int $id       brand id
+     * @param int $id brand id
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
@@ -3151,7 +3132,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createCatalogProductMetaFields(int $id, $object) : mixed
+	public static function createCatalogProductMetaFields(int $id, mixed $object) : mixed
 	{
 		return self::createCatalog('/products/' . $id . '/metafields', $object);
     }
@@ -3166,7 +3147,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCatalogProductMetaFields($id, array|int|bool|Filter $filter = false) : array|string
+	public static function getCatalogProductMetaFields(int $id, array|int|bool|Filter $filter = false) : array|string
 	{
 		return self::getCatalogs('/products/' . $id . '/metafields', $filter);
 	}
@@ -3176,7 +3157,6 @@ class Client
 	 *
      * @param int $productId product id
      * @param int $id product meta field id
-	 * @param array|int|bool|Filter $filter
 	 * @return array|string list of products or XML string if useXml is true
 	 * @throws ClientError
 	 * @throws NetworkError
@@ -3191,13 +3171,13 @@ class Client
 	 * update catalog product metafield
      * @param int $productId product id
 	 * @param int $id metafield id
-	 * @param \stdClass $object metafield params
+	 * @param mixed $object metafield params
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateCatalogProductMetaField(int $productId, int $id, $object) : mixed
+	public static function updateCatalogProductMetaField(int $productId, int $id, mixed $object) : mixed
 	{
 		return self::updateCatalog('/products/' . $productId . '/metafields/' . $id, $object);
 	}
@@ -3226,7 +3206,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createCatalogProductImage(int $id, $object) : mixed
+	public static function createCatalogProductImage(int $id, mixed $object) : mixed
 	{
 		return self::createCatalog('/products/' . $id . '/images', $object);
 	}
@@ -3264,13 +3244,13 @@ class Client
 	 * update catalog product image
      * @param int $productId product id
 	 * @param int $id image id
-	 * @param \stdClass $object image params
+	 * @param mixed $object image params
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateCatalogProductImage(int $productId, int $id, $object) : mixed
+	public static function updateCatalogProductImage(int $productId, int $id, mixed $object) : mixed
 	{
 		return self::updateCatalog('/products/' . $productId . '/images/' . $id, $object);
 	}
@@ -3299,7 +3279,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createCatalogProductCustomField(int $id, $object) : mixed
+	public static function createCatalogProductCustomField(int $id, mixed $object) : mixed
 	{
 		return self::createCatalog('/products/' . $id . '/custom-fields', $object);
 	}
@@ -3337,13 +3317,13 @@ class Client
 	 * update catalog product custom field
      * @param int $productId product id
 	 * @param int $id custom field id
-	 * @param \stdClass $object custom field params
+	 * @param mixed $object custom field params
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateCatalogProductCustomField(int $productId, int $id, $object) : mixed
+	public static function updateCatalogProductCustomField(int $productId, int $id, mixed $object) : mixed
 	{
 		return self::updateCatalog('/products/' . $productId . '/custom-fields/' . $id, $object);
 	}
@@ -3372,7 +3352,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createCatalogProductBulkPricingRule(int $id, $object) : mixed
+	public static function createCatalogProductBulkPricingRule(int $id, mixed $object) : mixed
 	{
 		return self::createCatalog('/products/' . $id . '/bulk-pricing-rules', $object);
 	}
@@ -3410,13 +3390,13 @@ class Client
 	 * update catalog product bulk pricing rules
      * @param int $productId product id
 	 * @param int $id bulk pricing rules id
-	 * @param \stdClass $object bulk pricing rules params
+	 * @param mixed $object bulk pricing rules params
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateCatalogProductBulkPricingRule(int $productId, int $id, $object) : mixed
+	public static function updateCatalogProductBulkPricingRule(int $productId, int $id, mixed $object) : mixed
 	{
 		return self::updateCatalog('/products/' . $productId . '/bulk-pricing-rules/' . $id, $object);
 	}
