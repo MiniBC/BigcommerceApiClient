@@ -318,11 +318,12 @@ class Connection
 	 * If failOnError is true, a client or server error is raised, otherwise returns false
 	 * on error.
 	 *
+     * @return mixed
 	 * @throws NetworkError
 	 * @throws ClientError
 	 * @throws ServerError
 	 */
-	private function handleResponse()
+	private function handleResponse() : mixed
 	{
 		if (curl_errno($this->curl)) {
 			throw new NetworkError(curl_error($this->curl), curl_errno($this->curl));
