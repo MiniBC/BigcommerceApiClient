@@ -8,7 +8,7 @@ namespace Bigcommerce\Api;
 class ClientError extends Error
 {
 
-	public function __toString()
+	public function __toString() : string
 	{
 		return "Client Error ({$this->code}): " . $this->message;
 	}

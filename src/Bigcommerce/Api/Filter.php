@@ -1,5 +1,4 @@
 <?php
-
 namespace Bigcommerce\Api;
 
 /**
@@ -7,28 +6,28 @@ namespace Bigcommerce\Api;
  */
 class Filter
 {
-	private $parameters;
+	private array $parameters;
 
 	/**
 	 * Factory method, creates an instance of a filter.
 	 * Used to build URLs to collection endpoints.
 	 */
-	public static function create($filter=false)
+	public static function create(mixed $filter = false)
 	{
 		if ($filter instanceof self) {
 			return $filter;
 		}
 
 		if (is_int($filter)) {
-			$filter = array('page'=> $filter);
+			$filter = array( 'page' => $filter );
 		}
 
 		return new self($filter);
 	}
 
-	public function __construct($filter=array())
+	public function __construct($filter = [])
 	{
-		$this->parameters = ($filter) ? $filter : array();
+		$this->parameters = ($filter) ?: array();
 	}
 
 	public function __set($parameter, $value)

@@ -1,70 +1,71 @@
 <?php
-
 namespace Bigcommerce\Api;
+
+use \stdClass;
 
 class Resource
 {
 	/**
 	 *
-	 * @var stdclass
+	 * @var stdClass|null
 	 */
-	protected $fields;
+	protected stdClass|null $fields;
 
 	/**
 	 * @var int
 	 */
-	protected $id;
+	protected int $id;
 
 	/**
 	 * @var array
 	 */
-	protected $ignoreOnCreate = array();
+	protected array $ignoreOnCreate = [];
 
 	/**
 	 * @var array
 	 */
-	protected $ignoreOnUpdate = array();
+	protected array $ignoreOnUpdate = [];
 
 	/**
 	 * @var array
 	 */
-	protected $ignoreIfZero = array();
+	protected array $ignoreIfZero = [];
 
-	public function __construct($object=false)
+	public function __construct(mixed $object = false)
 	{
 		if (is_array($object)) {
 			$object = (isset($object[0])) ? $object[0] : false;
 		}
-		$this->fields = ($object) ? $object : new \stdClass;
+
+		$this->fields = ($object) ?: new stdClass;
 		$this->id = ($object && isset($object->id)) ? $object->id : 0;
 	}
 
-	public function __get($field)
+	public function __get(string $field) : mixed
 	{
 		if (method_exists($this, $field) && isset($this->fields->$field)) {
 			return $this->$field();
 		}
+
 		return (isset($this->fields->$field)) ? $this->fields->$field : null;
 	}
 
-	public function __set($field, $value)
+	public function __set(string $field, mixed $value)
 	{
 		$this->fields->$field = $value;
 	}
 
-	public function __isset($field)
+	public function __isset(string $field)
 	{
 		return (isset($this->fields->$field));
 	}
 
-	public function getAllFields()
+	public function getAllFields() : stdClass|null
 	{
-		$resource = $this->fields;
-
-		return $resource;
+		return $this->fields;
 	}
 
-	public function getCreateFields()
+	public function getCreateFields() : stdClass|null
 	{
 		$resource = $this->fields;
 
@@ -75,7 +76,7 @@ class Resource
 		return $resource;
 	}
 
-	public function getUpdateFields()
+	public function getUpdateFields() : stdClass|null
 	{
 		$resource = $this->fields;
 
@@ -90,11 +91,11 @@ class Resource
 		return $resource;
 	}
 
-	private function isIgnoredField($field, $value)
+	private function isIgnoredField(string $field, mixed $value) : bool
 	{
 		if ($value === null) return true;
 
-		if ((strpos($field, "date") !== FALSE) && $value === "") return true;
+		if ((str_contains($field, "date")) && $value === "") return true;
 
 		if (in_array($field, $this->ignoreIfZero) && $value === 0) return true;
 

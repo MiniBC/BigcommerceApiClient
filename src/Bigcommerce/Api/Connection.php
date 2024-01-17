@@ -1,5 +1,4 @@
 <?php
-
 namespace Bigcommerce\Api;
 
 use CurlHandle;
