@@ -2,85 +2,87 @@
 
 namespace Bigcommerce\Api;
 
+use CurlHandle;
+
 /**
  * HTTP connection.
  */
 class Connection
 {
 	/**
-	 * @var \stdClass cURL resource
+	 * @var CurlHandle cURL resource
 	 */
-	private $curl;
+	private CurlHandle $curl;
 
 	/**
-	 * @var array hash of HTTP request headers
+	 * @var array<string, string> hash of HTTP request headers
 	 */
-	private $headers = array();
+	private array $headers = [];
 
 	/**
-	 * @var array hash of headers from HTTP response
+	 * @var array<string, string> hash of headers from HTTP response
 	 */
-	private $responseHeaders = array();
+	private array $responseHeaders = [];
 
 	/**
 	 * The status line of the response.
 	 * @var string
 	 */
-	private $responseStatusLine;
+	private string $responseStatusLine;
 
 	/**
-	 * @var string hash of headers from HTTP response
+	 * @var string response body
 	 */
-	private $responseBody;
+	private string $responseBody;
 
 	/**
 	 * @var boolean
 	 */
-	private $failOnError = false;
+	private bool $failOnError = false;
 
 	/**
 	 * Manually follow location redirects. Used if CURLOPT_FOLLOWLOCATION
 	 * is unavailable due to open_basedir restriction.
 	 * @var boolean
 	 */
-	private $followLocation = false;
+	private bool $followLocation = false;
 
 	/**
 	 * Maximum number of redirects to try.
 	 * @var int
 	 */
-	private $maxRedirects = 20;
+	private int $maxRedirects = 20;
 
 	/**
 	 * Number of redirects followed in a loop.
 	 * @var int
 	 */
-	private $redirectsFollowed = 0;
+	private int $redirectsFollowed = 0;
 
 	/**
 	 * Deal with failed requests if failOnError is not set.
-	 * @var mixed
+	 * @var string|false
 	 */
-	private $lastError = false;
+	private mixed $lastError = false;
 
 	/**
 	 * Determines whether the response body should be returned as a raw string.
 	 */
-	private $rawResponse = false;
+	private bool $rawResponse = false;
 
 	/**
 	 * Determines the default content type to use with requests and responses.
 	 */
-	private $contentType;
+	private string $contentType;
 
 	/**
 	 * @var bool determines if another attempt should be made if the request
 	 * failed due to too many requests.
 	 */
-	private $autoRetry = true;
+	private bool $autoRetry = true;
 
 	/** @var int current count of retry attempts */
-	private $retryAttempts = 0;
+	private int $retryAttempts = 0;
 
 	/**
 	 * Maximum number of retries for a request before reporting a failure.
@@ -107,7 +109,7 @@ class Connection
 	 */
 	public function __construct()
 	{
-		if (!defined('STDIN')) {
+        if (!defined('STDIN')) {
 			define('STDIN', fopen('php://stdin', 'r'));
 		}
 
@@ -137,7 +139,7 @@ class Connection
 	 *
 	 * @param bool $option
 	 */
-	public function useXml($option=true)
+	public function useXml(bool $option = true)
 	{
 		if ($option) {
 			$this->contentType = self::MEDIA_TYPE_XML;
@@ -154,7 +156,7 @@ class Connection
 	 *
 	 * @param bool $option
 	 */
-	public function useUrlencoded($option=true)
+	public function useUrlencoded(bool $option = true)
 	{
 		if ($option) {
 			$this->contentType = self::MEDIA_TYPE_WWW;
@@ -176,7 +178,7 @@ class Connection
 	 *
 	 * @param bool $option
 	 */
-	public function failOnError($option = true)
+	public function failOnError(bool $option = true)
 	{
 		$this->failOnError = $option;
 	}
@@ -187,7 +189,7 @@ class Connection
 	 * @param string $username
 	 * @param string $password
 	 */
-	public function authenticate($username, $password)
+	public function authenticateBasic(string $username, string $password)
 	{
 		$this->removeHeader('X-Auth-Client');
 		$this->removeHeader('X-Auth-Token');
@@ -201,7 +203,7 @@ class Connection
 	 * @param string $clientId
 	 * @param string $authToken
 	 */
-	public function authenticateOauth($clientId, $authToken)
+	public function authenticateOauth(string $clientId, string $authToken)
 	{
 		$this->addHeader('X-Auth-Client', $clientId);
 		$this->addHeader('X-Auth-Token', $authToken);
@@ -214,9 +216,9 @@ class Connection
 	 *
 	 * @param bool $retry
 	 */
-	public function setAutoRetry($retry = true)
+	public function setAutoRetry(bool $retry = true)
 	{
-		$this->autoRetry = (bool)$retry;
+		$this->autoRetry = $retry;
 	}
 
 	/**
@@ -225,7 +227,7 @@ class Connection
 	 *
 	 * @param int $timeout number of seconds to wait on a response
 	 */
-	public function setTimeout($timeout)
+	public function setTimeout(int $timeout)
 	{
 		curl_setopt($this->curl, CURLOPT_TIMEOUT, $timeout);
 		curl_setopt($this->curl, CURLOPT_CONNECTTIMEOUT, $timeout);
@@ -237,7 +239,7 @@ class Connection
 	 * @param string $server
 	 * @param bool|int $port
 	 */
-	public function useProxy($server, $port=false)
+	public function useProxy(string $server, bool|int $port = false)
 	{
 		curl_setopt($this->curl, CURLOPT_PROXY, $server);
 
@@ -250,7 +252,7 @@ class Connection
 	 * @todo may need to handle CURLOPT_SSL_VERIFYHOST and CURLOPT_CAINFO as well
 	 * @param boolean
 	 */
-	public function verifyPeer($option=false)
+	public function verifyPeer(bool $option = false)
 	{
 		curl_setopt($this->curl, CURLOPT_SSL_VERIFYPEER, $option);
 	}
@@ -259,7 +261,7 @@ class Connection
 	 * Set which cipher to use during SSL requests.
 	 * @param string $cipher the name of the cipher
 	 */
-	public function setCipher($cipher='TLSv1')
+	public function setCipher(string $cipher = 'TLSv1')
 	{
 		curl_setopt($this->curl, CURLOPT_SSL_CIPHER_LIST, $cipher);
 	}
@@ -270,7 +272,7 @@ class Connection
 	 * @param string $header
 	 * @param string $value
 	 */
-	public function addHeader($header, $value)
+	public function addHeader(string $header, string $value)
 	{
 		$this->headers[$header] = "$header: $value";
 	}
@@ -278,9 +280,9 @@ class Connection
 	/**
 	 * Removes a custom header from the request
 	 *
-	 * @param $header
+	 * @param string $header
 	 */
-	public function removeHeader($header)
+	public function removeHeader(string $header)
 	{
 		if (isset($this->headers[$header])) {
 			unset($this->headers[$header]);
@@ -292,7 +294,7 @@ class Connection
 	 *
 	 * Defaults to JSON.
 	 */
-	private function getContentType()
+	private function getContentType() : string
 	{
 		return ($this->contentType) ? $this->contentType : self::MEDIA_TYPE_JSON;
 	}
@@ -337,29 +339,31 @@ class Connection
 				}
 
 				if (is_object($body) && property_exists($body, 'errors')) {
-                                        if (is_array($body->errors)) {
-                                                $error = $body->errors[0];
-                                        } else {
-                                                $error = $body->errors;
-                                        }
+                    if (is_array($body->errors)) {
+                        $error = $body->errors[0];
+                    } else {
+                        $error = $body->errors;
+                    }
 
-                                        if (is_object($error) && property_exists($error, 'title')) {
-                                                throw new ClientError($error->title, $status);
-                                        }
-                                }
+                    if (is_object($error) && property_exists($error, 'title')) {
+                        throw new ClientError($error->title, $status);
+                    }
+                }
 
 				throw new ClientError($body, $status);
-			} else {
-				$this->lastError = $body;
-				return false;
 			}
+
+            $this->lastError = $body;
+
+            return false;
 		} elseif ($status >= 500 && $status <= 599) {
 			if ($this->failOnError) {
 				throw new ServerError($body, $status);
-			} else {
-				$this->lastError = $body;
-				return false;
 			}
+
+            $this->lastError = $body;
+
+            return false;
 		}
 
 		// reset retry attempts on a successful request
@@ -375,8 +379,10 @@ class Connection
 	/**
 	 * Return an representation of an error returned by the last request, or false
 	 * if the last request was not an error.
+     *
+     * @return mixed
 	 */
-	public function getLastError()
+	public function getLastError() : mixed
 	{
 		return $this->lastError;
 	}
@@ -422,20 +428,20 @@ class Connection
 	 * Make an HTTP GET request to the specified endpoint.
 	 *
 	 * @param string $url
-	 * @param bool|array $query
+	 * @param array $query
 	 * @return mixed
 	 *
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public function get($url, $query=false)
+	public function get(string $url, array $query = []) : mixed
 	{
 		$this->initializeRequest();
 
 		$requestUrl = $url;
 
-		if (is_array($query)) {
+		if (is_array($query) && !empty($query)) {
 			$requestUrl .= '?' . http_build_query($query);
 		}
 
@@ -489,20 +495,16 @@ class Connection
 	 * @throws ServerError
 	 * @throws NetworkError
 	 */
-	public function post($url, $body)
+	public function post(string $url, array $body) : mixed
 	{
 		$contentType = $this->getContentType();
 		$this->addHeader('Content-Type', $contentType);
 
-		$postData = $body;
-
-		if (!is_string($postData)) {
-			if ($contentType === self::MEDIA_TYPE_JSON) {
-				$postData = json_encode($postData);
-			} else {
-				$postData = http_build_query($postData, '', '&');
-			}
-		}
+        if ($contentType === self::MEDIA_TYPE_JSON) {
+            $postData = json_encode($body);
+        } else {
+            $postData = http_build_query($body, '', '&');
+        }
 
 		$this->initializeRequest();
 
@@ -556,7 +558,7 @@ class Connection
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public function head($url)
+	public function head(string $url) : mixed
 	{
 		$this->initializeRequest();
 
@@ -611,15 +613,11 @@ class Connection
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public function put($url, $body)
+	public function put(string $url, array $body) : mixed
 	{
 		$this->addHeader('Content-Type', $this->getContentType());
 
-		$bodyData = $body;
-
-		if (!is_string($bodyData)) {
-			$bodyData = json_encode($bodyData);
-		}
+		$bodyData = json_encode($body);
 
 		$this->initializeRequest();
 
@@ -681,7 +679,7 @@ class Connection
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public function delete($url)
+	public function delete(string $url) : mixed
 	{
 		$this->initializeRequest();
 
@@ -726,13 +724,13 @@ class Connection
 	/**
 	 * Callback methods collects header lines from the response.
 	 *
-	 * @param \stdClass $curl
+	 * @param CurlHandle $curl
 	 * @param string $headers
 	 * @return int
 	 */
-	private function parseHeader($curl, $headers)
+	private function parseHeader(CurlHandle $curl, string $headers) : int
 	{
-		if (!$this->responseStatusLine && strpos($headers, 'HTTP/') === 0) {
+		if (!$this->responseStatusLine && str_starts_with($headers, 'HTTP/')) {
 			$this->responseStatusLine = $headers;
 		} else {
 			$parts = explode(': ', $headers);
@@ -747,13 +745,14 @@ class Connection
 	/**
 	 * Callback method collects body content from the response.
 	 *
-	 * @param \stdClass $curl
+	 * @param CurlHandle $curl
 	 * @param string $body
 	 * @return int
 	 */
-	private function parseBody($curl, $body)
+	private function parseBody(CurlHandle $curl, string $body) : int
 	{
 		$this->responseBody .= $body;
+
 		return strlen($body);
 	}
 
@@ -763,7 +762,7 @@ class Connection
 	 * @param ClientError $ce
 	 * @return bool
 	 */
-	private function canRetryRequest(ClientError $ce)
+	private function canRetryRequest(ClientError $ce) : bool
 	{
 		return ($this->autoRetry && in_array((int)$ce->getCode(), array( 408, 429 )));
 	}
@@ -774,7 +773,7 @@ class Connection
 	 * @param ServerError $se
 	 * @return bool
 	 */
-	private function canRetryServerError(ServerError $se)
+	private function canRetryServerError(ServerError $se) : bool
 	{
 		if (
 			$this->autoRetry
@@ -787,7 +786,13 @@ class Connection
 		return false;
 	}
 
-	private function canRetryNetworkError(NetworkError $ne)
+    /**
+     * returns true if another attempt should be made
+     *
+     * @param NetworkError $ne
+     * @return bool
+     */
+	private function canRetryNetworkError(NetworkError $ne) : bool
 	{
 		if (
 			$this->autoRetry
@@ -804,7 +809,7 @@ class Connection
 	 * Access the status code of the response.
 	 * @return string
 	 */
-	public function getStatus()
+	public function getStatus() : string
 	{
 		return curl_getinfo($this->curl, CURLINFO_HTTP_CODE);
 	}
@@ -813,15 +818,17 @@ class Connection
 	 * Access the message string from the status line of the response.
 	 * @return string
 	 */
-	public function getStatusMessage()
+	public function getStatusMessage() : string 
 	{
 		return $this->responseStatusLine;
 	}
 
 	/**
 	 * Access the content body of the response
+     *
+     * @return string
 	 */
-	public function getBody()
+	public function getBody() : string
 	{
 		return $this->responseBody;
 	}
@@ -832,7 +839,7 @@ class Connection
 	 * @param string $header
 	 * @return string|bool
 	 */
-	public function getHeader($header)
+	public function getHeader(string $header) : string|bool
 	{
 		$header = strtolower($header);
 
@@ -846,7 +853,7 @@ class Connection
 	/**
 	 * Return the full list of response headers
 	 */
-	public function getHeaders()
+	public function getHeaders() : array
 	{
 		return $this->responseHeaders;
 	}
@@ -858,5 +865,4 @@ class Connection
 	{
 		curl_close($this->curl);
 	}
-
 }

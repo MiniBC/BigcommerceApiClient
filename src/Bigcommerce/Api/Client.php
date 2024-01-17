@@ -10,30 +10,60 @@ use \Exception as Exception;
  */
 class Client
 {
-	static private $store_url;
-	static private $username;
-	static private $api_key;
-	static private $connection;
-	static private $resource;
-	static private $path_prefix = '/api/v2';
-	static private $client_id;
-	static private $client_secret;
-	static private $auth_token;
-	static private $store_hash;
-	static private $stores_prefix = '/stores/%s/%s';
-	static private $api_url = 'https://api.bigcommerce.com';
-	static private $login_url = 'https://login.bigcommerce.com';
-	static private $version = 'v2';
+    /** @var string Full Store URL to connect to */
+	static private string $store_url;
 
-	static private $cipher;
-	static private $verifyPeer;
+    /** @var string Username to connect to the store API with */
+	static private string $username;
+
+    /** @var string API key */
+	static private string $api_key;
+
+    /** @var Connection|false Connection instance */
+    static private Connection|false $connection;
+
+    /** @var string Resource class name */
+	static private string $resource;
+
+    /** @var string API path prefix to be added to store URL for requests */
+	static private string $path_prefix = '/api/v2';
+
+    /** @var string The OAuth client ID */
+    static private string $client_id;
+
+    /** @var string The OAuth client secret */
+	static private string $client_secret;
+
+    /** @var string The OAuth Auth-Token */
+	static private string $auth_token;
+
+    /** @var string The store hash */
+	static private string $store_hash;
+
+    /** @var string URL pathname prefix for the V2 API */
+	static private string $stores_prefix = '/stores/%s/%s';
+
+    /** @var string The BigCommerce store management API host */
+	static private string $api_url = 'https://api.bigcommerce.com';
+
+    /** @var string The BigCommerce merchant login URL */
+	static private string $login_url = 'https://login.bigcommerce.com';
+
+    /** @var string API version */
+	static private string $version = 'v2';
+
+    /** @var string SSL cipher used for the connection */
+	static private string $cipher;
+
+    /** @var bool true if the current connection requires SSL verification */
+	static private bool $verifyPeer;
 
 	/**
 	 * Full URL path to the configured store API.
 	 *
 	 * @var string
 	 */
-	static public $api_path;
+	static public string $api_path;
 
 	/**
 	 * Configure the API client with the required credentials.
@@ -47,7 +77,7 @@ class Client
 	 * @param array $settings
 	 * @throws Exception
 	 */
-	public static function configureBasicAuth($settings)
+	public static function configureBasicAuth(array $settings)
 	{
 		if (!isset($settings['store_url'])) {
 			throw new Exception("'store_url' must be provided");
@@ -82,7 +112,7 @@ class Client
 	 * @param array $settings
 	 * @throws Exception
 	 */
-	public static function configureOAuth($settings)
+	public static function configureOAuth(array $settings)
 	{
 		if (!isset($settings['auth_token'])) {
 			throw new Exception("'auth_token' must be provided");
@@ -113,7 +143,7 @@ class Client
 	 * @param array $settings
 	 * @throws \Exception
 	 */
-	public static function configure($settings)
+	public static function configure(array $settings)
 	{
 		if (isset($settings['client_id'])) {
 			self::configureOAuth($settings);
@@ -125,9 +155,9 @@ class Client
 	/**
 	 * Configure the API client with the Bigcommerce API version
 	 *
-	 * @param $version
+	 * @param string $version
 	 */
-	public static function setVersion($version)
+	public static function setVersion(string $version)
 	{
 		self::$version = $version;
 
@@ -143,7 +173,7 @@ class Client
 	 *
 	 * @param bool $option
 	 */
-	public static function failOnError($option=true)
+	public static function failOnError(bool $option = true)
 	{
 		self::connection()->failOnError($option);
 	}
@@ -154,7 +184,7 @@ class Client
 	 *
 	 * @param bool $retry
 	 */
-	public static function autoRetry($retry = true)
+	public static function autoRetry(bool $retry = true)
 	{
 		self::connection()->setAutoRetry($retry);
 	}
@@ -181,7 +211,7 @@ class Client
 	 *
 	 * @param bool $option
 	 */
-	public static function verifyPeer($option=false)
+	public static function verifyPeer(bool $option = false)
 	{
 		self::$verifyPeer = $option;
 		self::connection()->verifyPeer($option);
@@ -192,7 +222,7 @@ class Client
 	 *
 	 * @param string $cipher
 	 */
-	public static function setCipher($cipher='TLSv1')
+	public static function setCipher(string $cipher = 'TLSv1')
 	{
 		self::$cipher = $cipher;
 		self::connection()->setCipher($cipher);
@@ -202,9 +232,9 @@ class Client
 	 * Connect to the internet through a proxy server.
 	 *
 	 * @param string $host host server
-	 * @param string|bool $port port
+	 * @param int|bool $port port
 	 */
-	public static function useProxy($host, $port=false)
+	public static function useProxy(string $host, bool|int $port = false)
 	{
 		self::connection()->useProxy($host, $port);
 	}
@@ -215,7 +245,7 @@ class Client
 	 *
 	 * @return string
 	 */
-	public static function getLastError()
+	public static function getLastError() : string
 	{
 		return self::connection()->getLastError();
 	}
@@ -226,7 +256,7 @@ class Client
 	 *
 	 * @return Connection
 	 */
-	private static function connection()
+	private static function connection() : Connection
 	{
 		if (!self::$connection) {
 			self::$connection = new Connection();
@@ -234,7 +264,7 @@ class Client
 			if (self::$client_id) {
 				self::$connection->authenticateOauth(self::$client_id, self::$auth_token);
 			} else {
-				self::$connection->authenticate(self::$username, self::$api_key);
+				self::$connection->authenticateBasic(self::$username, self::$api_key);
 			}
 		}
 
@@ -246,14 +276,14 @@ class Client
 	 *
 	 * @return Connection
 	 */
-	public static function getConnection()
+	public static function getConnection() : Connection
 	{
 		return self::connection();
 	}
 	/**
 	 * Set the HTTP connection object. DANGER: This can screw up your Client!
 	 *
-	 * @param Connection $connection The connection to use
+	 * @param Connection|null $connection The connection to use
 	 */
 	public static function setConnection(Connection $connection = null)
 	{
@@ -265,13 +295,13 @@ class Client
 	 *
 	 * @param string $path api endpoint
 	 * @param string $resource resource class to map individual items
-	 * @return mixed array|string mapped collection or XML string if useXml is true
+	 * @return array|string mapped collection or XML string if useXml is true
 	 *
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCollection($path, $resource='Resource')
+	public static function getCollection(string $path, string $resource = 'Resource') : array|string
 	{
 		$response = self::connection()->get(self::$api_path . $path);
 
@@ -283,12 +313,12 @@ class Client
 	 *
 	 * @param string $path api endpoint
 	 * @param string $resource resource class to map individual items
-	 * @return mixed Resource|string resource object or XML string if useXml is true
+	 * @return string|Resource Resource|string resource object or XML string if useXml is true
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getResource($path, $resource='Resource')
+	public static function getResource(string $path, string $resource = 'Resource') : string|Resource
 	{
 		$response = self::connection()->get(self::$api_path . $path);
 
@@ -299,18 +329,18 @@ class Client
 	 * Get a count value from the specified endpoint.
 	 *
 	 * @param string $path api endpoint
-	 * @return mixed int|string count value or XML string if useXml is true
+	 * @return int|string count value or XML string if useXml is true
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCount($path)
+	public static function getCount(string $path) : int|string
 	{
 		$response = self::connection()->get(self::$api_path . $path);
 
-		if ($response == false || is_string($response)) return $response;
+		if ($response === false || is_string($response)) return $response;
 
-		return $response->count;
+		return (int)$response->count;
 	}
 
 	/**
@@ -324,7 +354,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createResource($path, $object)
+	public static function createResource(string $path, $object) : mixed
 	{
 		if (is_array($object)) $object = (object)$object;
 
@@ -342,7 +372,7 @@ class Client
 	 * @throws ServerError
 	 * @throws NetworkError
 	 */
-	public static function updateResource($path, $object)
+	public static function updateResource(string $path, $object)
 	{
 		if (is_array($object)) $object = (object)$object;
 
@@ -359,7 +389,7 @@ class Client
 	 * @throws ServerError
 	 * @throws NetworkError
 	 */
-	public static function deleteResource($path)
+	public static function deleteResource(string $path) : mixed
 	{
 		return self::connection()->delete(self::$api_path . $path);
 	}
@@ -371,7 +401,7 @@ class Client
 	 * @param array $object object collection
 	 * @return array|string
 	 */
-	private static function mapCollection($resource, $object)
+	private static function mapCollection(string $resource, $object) : array|string
 	{
 		if ($object == false || is_string($object)) return $object;
 
@@ -391,7 +421,7 @@ class Client
 	 * @param \stdClass $object
 	 * @return Resource
 	 */
-	private static function mapCollectionObject($object)
+	private static function mapCollectionObject($object) : Resource
 	{
 		$class = self::$resource;
 
@@ -405,7 +435,7 @@ class Client
 	 * @param \stdClass $object
 	 * @return Resource|string
 	 */
-	private static function mapResource($resource, $object)
+	private static function mapResource(string $resource, $object) : Resource|string
 	{
 		if ($object == false || is_string($object)) return $object;
 
@@ -424,7 +454,7 @@ class Client
 	 * @throws ServerError
 	 * @throws NetworkError
 	 */
-	public static function getAuthToken($object)
+	public static function getAuthToken($object) : mixed
 	{
 		$context = array_merge(array(
 			'grant_type' => 'authorization_code'
@@ -446,10 +476,10 @@ class Client
 	 * @param int $id
 	 * @param string $redirectUrl
 	 * @param string $requestIp
-	 * @return mixed
+	 * @return string
 	 * @throws Exception
 	 */
-	public static function getCustomerLoginToken($id, $redirectUrl = '', $requestIp = '')
+	public static function getCustomerLoginToken(int $id, string $redirectUrl = '', string $requestIp = '') : string
 	{
 		if (empty(self::$client_secret)) {
 			throw new Exception('Cannot sign customer login tokens without a client secret');
@@ -483,7 +513,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getTime()
+	public static function getTime() : \DateTime|string
 	{
 		$response = self::connection()->get(self::$api_path . '/time');
 
@@ -495,28 +525,29 @@ class Client
 	/**
 	 * Returns the default collection of products.
 	 *
-	 * @param mixed $filter
-	 * @return mixed array|string list of products or XML string if useXml is true
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string list of products or XML string if useXml is true
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getProducts($filter=false)
+	public static function getProducts(array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
+
 		return self::getCollection('/products' . $filter->toQuery(), 'Product');
 	}
 
 	/**
 	 * Returns the total number of products in the collection.
 	 *
-	 * @param mixed $filter
-	 * @return mixed int|string number of products or XML string if useXml is true
+	 * @param array|int|bool|Filter $filter
+	 * @return int|string number of products or XML string if useXml is true
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getProductsCount($filter=false)
+	public static function getProductsCount(array|int|bool|Filter $filter = false) : int|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCount('/products/count' . $filter->toQuery());
@@ -526,13 +557,13 @@ class Client
 	 * Returns the collection of configurable fields
 	 *
 	 * @param int $id product id
-	 * @param mixed $filter
-	 * @return array
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getProductConfigurableFields($id, $filter=false)
+	public static function getProductConfigurableFields(int $id, array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCollection('/products/'.$id.'/configurablefields', "ProductConfigurableField");
@@ -542,13 +573,13 @@ class Client
 	 * The total number of configurable fields in the collection.
 	 *
 	 * @param int $id product id
-	 * @param mixed $filter
-	 * @return int
+	 * @param array|int|bool|Filter $filter
+	 * @return int|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getProductConfigurableFieldsCount($id, $filter=false)
+	public static function getProductConfigurableFieldsCount(int $id, array|int|bool|Filter $filter = false) : int|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCount('/products/'.$id.'/configurablefields/count' . $filter->toQuery());
@@ -557,13 +588,13 @@ class Client
 	/**
 	 * Returns the collection of discount rules
 	 *
-	 * @param mixed $filter
-	 * @return array
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getProductDiscountRules($filter=false)
+	public static function getProductDiscountRules(array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCollection('/products/discount_rules' . $filter->toQuery());
@@ -572,29 +603,30 @@ class Client
 	/**
 	 * The total number of discount rules in the collection.
 	 *
-	 * @param mixed $filter
-	 * @return int
+	 * @param array|int|bool|Filter $filter
+	 * @return int|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getProductDiscountRulesCount($filter=false)
+	public static function getProductDiscountRulesCount(array|int|bool|Filter $filter = false) : int|string
 	{
 		$filter = Filter::create($filter);
+
 		return self::getCount('/products/discount_rules/count' . $filter->toQuery());
 	}
 
 	/**
 	 * Create a new product image.
 	 *
-	 * @param string $productId
+	 * @param int $productId
 	 * @param mixed $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createProductImage($productId, $object)
+	public static function createProductImage(int $productId, $object) : mixed
 	{
 		return self::createResource('/products/' . $productId . '/images', $object);
 	}
@@ -602,15 +634,15 @@ class Client
 	/**
 	 * Update a product image.
 	 *
-	 * @param string $productId
-	 * @param string $imageId
+	 * @param int $productId
+	 * @param int $imageId
 	 * @param mixed $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateProductImage($productId, $imageId, $object)
+	public static function updateProductImage(int $productId, int $imageId, $object) : mixed
 	{
 		return self::updateResource('/products/' . $productId . '/images/' . $imageId, $object);
 	}
@@ -620,12 +652,12 @@ class Client
 	 *
 	 * @param int $productId
 	 * @param int $imageId
-	 * @return Resources\ProductImage|string
+	 * @return Resource|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getProductImage($productId, $imageId)
+	public static function getProductImage(int $productId, int $imageId) : Resource|string
 	{
 		return self::getResource('/products/' . $productId . '/images/' . $imageId, 'ProductImage');
 	}
@@ -638,8 +670,10 @@ class Client
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
+     *
+     * @todo ...is this even working
 	 */
-	public static function getProductImages($id)
+	public static function getProductImages(int $id)
 	{
 		return self::getResource('/products/' . $id . '/images/', 'ProductImage');
 	}
@@ -654,7 +688,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteProductImage($productId, $imageId)
+	public static function deleteProductImage(int $productId, int $imageId) : mixed
 	{
 		return self::deleteResource('/products/' . $productId . '/images/' . $imageId);
 	}
@@ -662,13 +696,13 @@ class Client
 	/**
 	 * Returns the collection of product images
 	 *
-	 * @param mixed $filter
-	 * @return array
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getProductsImages($filter=false)
+	public static function getProductsImages(array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCollection('/products/images' . $filter->toQuery(), "ProductImage");
@@ -677,13 +711,13 @@ class Client
 	/**
 	 * The total number of product images in the collection.
 	 *
-	 * @param mixed $filter
-	 * @return int
+	 * @param array|int|bool|Filter $filter
+	 * @return int|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getProductsImagesCount($filter=false)
+	public static function getProductsImagesCount(array|int|bool|Filter $filter = false) : int|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCount('/products/images/count' . $filter->toQuery());
@@ -693,12 +727,12 @@ class Client
 	 * Return the collection of all option values for a given option.
 	 *
 	 * @param int $productId
-	 * @return mixed
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getProductOptions($productId)
+	public static function getProductOptions(int $productId) : array|string
 	{
 		return self::getCollection('/products/' . $productId . '/options');
 	}
@@ -708,12 +742,12 @@ class Client
 	 *
 	 * @param int $productId
 	 * @param int $productOptionId
-	 * @return mixed
+	 * @return Resource|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getProductOption($productId, $productOptionId)
+	public static function getProductOption(int $productId, int $productOptionId) : Resource|string
 	{
 		return self::getResource('/products/' . $productId . '/options/' . $productOptionId);
 	}
@@ -723,12 +757,12 @@ class Client
 	 *
 	 * @param int $productId
 	 * @param int $productRuleId
-	 * @return mixed
+	 * @return Resource|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getProductRule($productId, $productRuleId)
+	public static function getProductRule(int $productId, int $productRuleId) : Resource|string
 	{
 		return self::getResource('/products/' . $productId . '/rules/' . $productRuleId);
 	}
@@ -736,13 +770,13 @@ class Client
 	/**
 	 * Returns the collection of product rules
 	 *
-	 * @param mixed $filter
-	 * @return array
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getProductRules($filter=false)
+	public static function getProductRules(array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCollection('/products/rules'  . $filter->toQuery(), "Rule");
@@ -751,13 +785,13 @@ class Client
 	/**
 	 * The total number of product rules in the collection.
 	 *
-	 * @param mixed $filter
-	 * @return int
+	 * @param array|int|bool|Filter $filter
+	 * @return int|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getProductRulesCount($filter=false)
+	public static function getProductRulesCount(array|int|bool|Filter $filter = false) : int|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCount('/products/rules/count' . $filter->toQuery());
@@ -766,13 +800,13 @@ class Client
 	/**
 	 * Returns the collection of product skus
 	 *
-	 * @param array|bool $filter
-	 * @return array
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getProductSkus($filter=false)
+	public static function getProductSkus(array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCollection('/products/skus' . $filter->toQuery(), "Sku");
@@ -781,13 +815,13 @@ class Client
 	/**
 	 * The total number of product skus in the collection.
 	 *
-	 * @param mixed $filter
-	 * @return int
+	 * @param array|int|bool|Filter $filter
+	 * @return int|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getProductSkusCount($filter=false)
+	public static function getProductSkusCount(array|int|bool|Filter $filter = false) : int|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCount('/products/skus/count' . $filter->toQuery());
@@ -796,13 +830,13 @@ class Client
 	/**
 	 * Returns the collection of product videos
 	 *
-	 * @param array|bool $filter
-	 * @return array
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws ServerError
 	 * @throws NetworkError
 	 */
-	public static function getProductVideos($filter=false)
+	public static function getProductVideos(array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCollection('/products/videos' . $filter->toQuery(), "ProductVideo");
@@ -811,13 +845,13 @@ class Client
 	/**
 	 * The total number of product videos in the collection.
 	 *
-	 * @param mixed $filter
-	 * @return int
+	 * @param array|int|bool|Filter $filter
+	 * @return int|string
 	 * @throws ClientError
 	 * @throws ServerError
 	 * @throws NetworkError
 	 */
-	public static function getProductVideosCount($filter=false)
+	public static function getProductVideosCount(array|int|bool|Filter $filter = false) : int|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCount('/products/videos/count' . $filter->toQuery());
@@ -827,49 +861,49 @@ class Client
 	 * Gets collection of custom fields for a product.
 	 *
 	 * @param int $id product ID
-	 * @return mixed array|string list of products or XML string if useXml is true
+	 * @return array|string list of products or XML string if useXml is true
 	 * @throws ClientError
 	 * @throws ServerError
 	 * @throws NetworkError
 	 */
-	public static function getProductCustomFields($id)
+	public static function getProductCustomFields(int $id): array|string
 	{
 		return self::getCollection('/products/' . $id . '/customfields/', 'ProductCustomField');
 	}
 
 	/**
 	 * Returns a single custom field by given id
-	 * @param  int $product_id product id
+	 * @param  int $productId   product id
 	 * @param  int $id         custom field id
-	 * @return Resources\ProductCustomField|bool Returns ProductCustomField if exists, false if not exists
+	 * @return Resource|string Returns ProductCustomField if exists, false if not exists
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getProductCustomField($product_id, $id)
+	public static function getProductCustomField(int $productId, int $id) : Resource|string
 	{
-		return self::getResource('/products/' . $product_id . '/customfields/' . $id, 'ProductCustomField');
+		return self::getResource('/products/' . $productId . '/customfields/' . $id, 'ProductCustomField');
 	}
 
 	/**
 	 * Create a new custom field for a given product.
 	 *
-	 * @param int $product_id product id
+	 * @param int $productId product id
 	 * @param mixed $object fields to create
-	 * @return Object Object with `id`, `product_id`, `name` and `text` keys
+	 * @return mixed Object with `id`, `product_id`, `name` and `text` keys
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createProductCustomField($product_id, $object)
+	public static function createProductCustomField(int $productId, $object) : mixed
 	{
-		return self::createResource('/products/' . $product_id . '/customfields', $object);
+		return self::createResource('/products/' . $productId . '/customfields', $object);
 	}
 
 	/**
 	 * Update the given custom field.
 	 *
-	 * @param int $product_id product id
+	 * @param int $productId product id
 	 * @param int $id custom field id
 	 * @param mixed $object custom field to update
 	 * @return mixed
@@ -877,36 +911,36 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateProductCustomField($product_id, $id, $object)
+	public static function updateProductCustomField(int $productId, int $id, $object) : mixed
 	{
-		return self::updateResource('/products/' . $product_id . '/customfields/' . $id, $object);
+		return self::updateResource('/products/' . $productId . '/customfields/' . $id, $object);
 	}
 
 	/**
 	 * Delete the given custom field.
 	 *
-	 * @param int $product_id product id
+	 * @param int $productId product id
 	 * @param int $id custom field id
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteProductCustomField($product_id, $id)
+	public static function deleteProductCustomField(int $productId, int $id) : mixed
 	{
-		return self::deleteResource('/products/' . $product_id . '/customfields/' . $id);
+		return self::deleteResource('/products/' . $productId . '/customfields/' . $id);
 	}
 
 	/**
 	 * Returns the collection of custom fields
 	 *
-	 * @param mixed $filter
-	 * @return array
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getProductsCustomFields($filter=false)
+	public static function getProductsCustomFields(array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCollection('/products/customfields' . $filter->toQuery(), "ProductCustomField");
@@ -915,13 +949,13 @@ class Client
 	/**
 	 * The total number of custom fields in the collection.
 	 *
-	 * @param mixed $filter
-	 * @return int
+	 * @param array|int|bool|Filter $filter
+	 * @return int|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getProductsCustomFieldsCount($filter=false)
+	public static function getProductsCustomFieldsCount(array|int|bool|Filter $filter = false) : int|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCount('/products/customfields/count' . $filter->toQuery());
@@ -930,13 +964,13 @@ class Client
 	/**
 	 * Gets collection of reviews for a product.
 	 *
-	 * @param $id
-	 * @return mixed
+	 * @param int $id
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getProductReviews($id)
+	public static function getProductReviews(int $id) : array|string
 	{
 		return self::getCollection('/products/' . $id . '/reviews/', 'ProductReview');
 	}
@@ -945,12 +979,12 @@ class Client
 	 * Returns a single product resource by the given id.
 	 *
 	 * @param int $id product id
-	 * @return Resources\Product|string
+	 * @return Resource|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getProduct($id)
+	public static function getProduct(int $id) : Resource|string
 	{
 		return self::getResource('/products/' . $id, 'Product');
 	}
@@ -964,7 +998,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createProduct($object)
+	public static function createProduct($object) : mixed
 	{
 		return self::createResource('/products', $object);
 	}
@@ -979,7 +1013,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateProduct($id, $object)
+	public static function updateProduct(int $id, $object) : mixed
 	{
 		return self::updateResource('/products/' . $id, $object);
 	}
@@ -993,7 +1027,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteProduct($id)
+	public static function deleteProduct(int $id) : mixed
 	{
 		return self::deleteResource('/products/' . $id);
 	}
@@ -1001,13 +1035,13 @@ class Client
 	/**
 	 * Return the collection of options.
 	 *
-	 * @param mixed $filter
-	 * @return array
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getOptions($filter=false)
+	public static function getOptions(array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCollection('/options' . $filter->toQuery(), 'Option');
@@ -1022,7 +1056,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createOptions($object)
+	public static function createOptions($object) : mixed
 	{
 		return self::createResource('/options', $object);
 	}
@@ -1031,12 +1065,12 @@ class Client
 	/**
 	 * Return the number of options in the collection
 	 *
-	 * @return int
+	 * @return int|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getOptionsCount()
+	public static function getOptionsCount() : int|string
 	{
 		return self::getCount('/options/count');
 	}
@@ -1045,12 +1079,12 @@ class Client
 	 * Return a single option by given id.
 	 *
 	 * @param int $id option id
-	 * @return Resources\Option
+	 * @return Resource|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getOption($id)
+	public static function getOption(int $id) : Resource|string
 	{
 		return self::getResource('/options/' . $id, 'Option');
 	}
@@ -1066,7 +1100,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteOption($id)
+	public static function deleteOption(int $id) : mixed
 	{
 		return self::deleteResource('/options/' . $id);
 	}
@@ -1074,28 +1108,28 @@ class Client
 	/**
 	 * Return a single value for an option.
 	 *
-	 * @param int $option_id option id
-	 * @param int $id value id
-	 * @return Resources\OptionValue
+	 * @param int $optionId option id
+	 * @param int $valueId value id
+	 * @return Resource|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getOptionValue($option_id, $id)
+	public static function getOptionValue(int $optionId, int $valueId) : Resource|string
 	{
-		return self::getResource('/options/' . $option_id . '/values/' . $id, 'OptionValue');
+		return self::getResource('/options/' . $optionId . '/values/' . $valueId, 'OptionValue');
 	}
 
 	/**
 	 * Return the collection of all option values.
 	 *
-	 * @param mixed $filter
-	 * @return array
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getOptionValues($filter=false)
+	public static function getOptionValues(array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCollection('/options/values' . $filter->toQuery(), 'OptionValue');
@@ -1109,16 +1143,17 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getOptionValuesCount()
+	public static function getOptionValuesCount() : int
 	{
 		$page = 1;
-		$filter = Filter::create(array('page'=>$page, 'limit'=>250));
+		$filter = Filter::create([ 'page' => $page, 'limit' => 250 ]);
 
 		$data = self::getOptionValues($filter);
 		$count = count($data);
+        
 		while ($data) {
 			$page++;
-			$filter = Filter::create(array('page'=>$page, 'limit'=>250));
+			$filter = Filter::create([ 'page' => $page, 'limit' => 250 ]);
 			$data = self::getOptionValues($filter);
 			$count += count($data);
 		}
@@ -1129,13 +1164,13 @@ class Client
 	/**
 	 * The collection of categories.
 	 *
-	 * @param mixed $filter
-	 * @return array
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCategories($filter=false)
+	public static function getCategories(array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCollection('/categories' . $filter->toQuery(), 'Category');
@@ -1144,13 +1179,13 @@ class Client
 	/**
 	 * The number of categories in the collection.
 	 *
-	 * @param mixed $filter
-	 * @return int
+	 * @param array|int|bool|Filter $filter
+	 * @return int|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCategoriesCount($filter=false)
+	public static function getCategoriesCount(array|int|bool|Filter $filter = false) : int|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCount('/categories/count' . $filter->toQuery());
@@ -1160,12 +1195,12 @@ class Client
 	 * A single category by given id.
 	 *
 	 * @param int $id category id
-	 * @return Resources\Category
+	 * @return Resource|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCategory($id)
+	public static function getCategory(int $id) : Resource|string
 	{
 		return self::getResource('/categories/' . $id, 'Category');
 	}
@@ -1179,7 +1214,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createCategory($object)
+	public static function createCategory($object) : mixed
 	{
 		return self::createResource('/categories/', $object);
 	}
@@ -1194,7 +1229,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateCategory($id, $object)
+	public static function updateCategory(int $id, $object) : mixed
 	{
 		return self::updateResource('/categories/' . $id, $object);
 	}
@@ -1208,7 +1243,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteCategory($id)
+	public static function deleteCategory(int $id) : mixed
 	{
 		return self::deleteResource('/categories/' . $id);
 	}
@@ -1216,13 +1251,13 @@ class Client
 	/**
 	 * The collection of brands.
 	 *
-	 * @param mixed $filter
-	 * @return array
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getBrands($filter=false)
+	public static function getBrands(array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCollection('/brands' . $filter->toQuery(), 'Brand');
@@ -1231,13 +1266,13 @@ class Client
 	/**
 	 * The total number of brands in the collection.
 	 *
-	 * @param mixed $filter
-	 * @return int
+	 * @param array|int|bool|Filter $filter
+	 * @return int|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getBrandsCount($filter=false)
+	public static function getBrandsCount(array|int|bool|Filter $filter = false) : int|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCount('/brands/count' . $filter->toQuery());
@@ -1247,12 +1282,12 @@ class Client
 	 * A single brand by given id.
 	 *
 	 * @param int $id brand id
-	 * @return Resources\Brand
+	 * @return Resource|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getBrand($id)
+	public static function getBrand(int $id) : Resource|string
 	{
 		return self::getResource('/brands/' . $id, 'Brand');
 	}
@@ -1266,7 +1301,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createBrand($object)
+	public static function createBrand($object) : mixed
 	{
 		return self::createResource('/brands', $object);
 	}
@@ -1281,7 +1316,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateBrand($id, $object)
+	public static function updateBrand(int $id, $object) : mixed
 	{
 		return self::updateResource('/brands/' . $id, $object);
 	}
@@ -1295,7 +1330,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteBrand($id)
+	public static function deleteBrand(int $id) : mixed
 	{
 		return self::deleteResource('/brands/' . $id);
 	}
@@ -1303,13 +1338,13 @@ class Client
 	/**
 	 * The collection of orders.
 	 *
-	 * @param mixed $filter
-	 * @return array
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getOrders($filter=false)
+	public static function getOrders(array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCollection('/orders' . $filter->toQuery(), 'Order');
@@ -1318,12 +1353,12 @@ class Client
 	/**
 	 * The number of orders in the collection.
 	 *
-	 * @return int
+	 * @return int|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getOrdersCount()
+	public static function getOrdersCount() : int|string
 	{
 		return self::getCount('/orders/count');
 	}
@@ -1332,12 +1367,12 @@ class Client
 	 * A single order.
 	 *
 	 * @param int $id order id
-	 * @return Resources\Order
+	 * @return Resource|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getOrder($id)
+	public static function getOrder(int $id) : Resource|string
 	{
 		return self::getResource('/orders/' . $id, 'Order');
 	}
@@ -1352,7 +1387,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteOrder($id)
+	public static function deleteOrder(int $id) : mixed
 	{
 		return self::deleteResource('/orders/' . $id);
 	}
@@ -1366,7 +1401,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 **/
-	public static function createOrder($object)
+	public static function createOrder($object) : mixed
 	{
 		return self::createResource('/orders', $object);
 	}
@@ -1374,13 +1409,13 @@ class Client
 	/**
 	 * Returns the collection of order coupons
 	 *
-	 * @param mixed $filter
-	 * @return array
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getOrderCoupons($filter=false)
+	public static function getOrderCoupons(array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCollection('/orders/coupons' . $filter->toQuery(), 'Coupon');
@@ -1389,21 +1424,22 @@ class Client
 	/**
 	 * The total number of order coupons in the collection.
 	 *
-	 * @param mixed $filter
-	 * @return int
+	 * @param array|int|bool|Filter $filter
+	 * @return int|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getOrderCouponsCount($filter=false)
+	public static function getOrderCouponsCount(array|int|bool|Filter $filter = false) : int|string
 	{
 		$page = 1;
-		$filter = Filter::create(array('page'=>$page, 'limit'=>250));
+		$filter = Filter::create([ 'page' => $page, 'limit' => 250 ]);
 		$data = self::getOrderCoupons($filter);
 		$count = count($data);
+
 		while ($data) {
 			$page++;
-			$filter = Filter::create(array('page'=>$page, 'limit'=>250));
+			$filter = Filter::create([ 'page' => $page, 'limit' => 250 ]);
 			$data = self::getOrderCoupons($filter);
 			$count += count($data);
 		}
@@ -1414,13 +1450,13 @@ class Client
 	/**
 	 * Returns the collection of order products
 	 *
-	 * @param mixed $filter
-	 * @return array
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getOrderProducts($filter=false)
+	public static function getOrderProducts(array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCollection('/orders/products' . $filter->toQuery(), 'Product');
@@ -1429,13 +1465,13 @@ class Client
 	/**
 	 * The total number of order products in the collection.
 	 *
-	 * @param mixed $filter
-	 * @return int
+	 * @param array|int|bool|Filter $filter
+	 * @return int|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getOrderProductsCount($filter=false)
+	public static function getOrderProductsCount(array|int|bool|Filter $filter = false) : int|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCount('/orders/products/count' . $filter->toQuery());
@@ -1444,13 +1480,13 @@ class Client
 	/**
 	 * Returns the collection of order shipments
 	 *
-	 * @param mixed $filter
-	 * @return array
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getOrderShipments($filter=false)
+	public static function getOrderShipments(array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCollection('/orders/shipments' . $filter->toQuery());
@@ -1459,13 +1495,13 @@ class Client
 	/**
 	 * The total number of order shipments in the collection.
 	 *
-	 * @param mixed $filter
-	 * @return int
+	 * @param array|int|bool|Filter $filter
+	 * @return int|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getOrderShipmentsCount($filter=false)
+	public static function getOrderShipmentsCount(array|int|bool|Filter $filter = false) : int|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCount('/orders/shipments/count' . $filter->toQuery());
@@ -1474,13 +1510,14 @@ class Client
 	/**
 	 * Returns the collection of shipping addresses
 	 *
-	 * @param mixed $filter
-	 * @return array
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getOrderShippingAddresses($filter=false) {
+	public static function getOrderShippingAddresses(array|int|bool|Filter $filter = false) : array|string
+    {
 		$filter = Filter::create($filter);
 		return self::getCollection('/orders/shippingaddresses/' . $filter->toQuery(), "Address");
 	}
@@ -1488,13 +1525,14 @@ class Client
 	/**
 	 * The total number of shipping addresses in the collection.
 	 *
-	 * @param mixed $filter
-	 * @return int
+	 * @param array|int|bool|Filter $filter
+	 * @return int|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getOrderShippingAddressesCount($filter=false) {
+	public static function getOrderShippingAddressesCount(array|int|bool|Filter $filter = false) : int|string
+    {
 		$filter = Filter::create($filter);
 		return self::getCount('/orders/shippingaddresses/count' . $filter->toQuery());
 	}
@@ -1502,13 +1540,13 @@ class Client
 	/**
 	 * The list of customers.
 	 *
-	 * @param mixed $filter
-	 * @return array
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCustomers($filter=false)
+	public static function getCustomers(array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCollection('/customers' . $filter->toQuery(), 'Customer');
@@ -1517,13 +1555,13 @@ class Client
 	/**
 	 * The total number of customers in the collection.
 	 *
-	 * @param mixed $filter
-	 * @return int
+	 * @param array|int|bool|Filter $filter
+	 * @return int|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCustomersCount($filter=false)
+	public static function getCustomersCount(array|int|bool|Filter $filter = false) : int|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCount('/customers/count' . $filter->toQuery());
@@ -1532,18 +1570,20 @@ class Client
 	/**
 	 * The total number of customers in the collection.
 	 *
-	 * @param mixed $filter
-	 * @return int
+	 * @param array|int|bool|Filter $filter
+     * @param bool $isDataOnly
+	 * @return Resource|array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCustomerAttributes($filter=false, $isDataOnly=false)
+	public static function getCustomerAttributes(array|int|bool|Filter $filter = false, bool $isDataOnly = false) : Resource|array|string
 	{
 		$filter = Filter::create($filter);
 		$response = self::getV3Resource('/customers/attributes' . $filter->toQuery());
+
 		if ($isDataOnly) {
-			if ($response !== false && !empty($response->data)) {
+			if (!empty($response->data)) {
 				return self::mapCollection('Resource', $response->data);
 			}
 		}
@@ -1554,17 +1594,19 @@ class Client
 	/**
 	 * The total number of customers in the collection.
 	 *
-	 * @param mixed $filter
-	 * @return int
+	 * @param array|int|bool|Filter $filter
+     * @param bool $isDataOnly
+	 * @return Resource|array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCustomerAttributeValues($filter=false, $isDataOnly=false)
+	public static function getCustomerAttributeValues(array|int|bool|Filter $filter = false, bool $isDataOnly = false) : Resource|array|string
 	{
 		$filter = Filter::create($filter);
 		$response = self::getV3Resource('/customers/attribute-values' . $filter->toQuery());
-		if ($isDataOnly) {
+
+        if ($isDataOnly) {
 			if ($response !== false && !empty($response->data)) {
 				return self::mapCollection('Resource', $response->data);
 			}
@@ -1576,51 +1618,53 @@ class Client
 	/**
 	 * The total number of customer Attributes.
 	 *
-	 * @param mixed $filter
+	 * @param array|int|bool|Filter $filter
 	 * @return int
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCustomerAttributesCount($filter=false)
+	public static function getCustomerAttributesCount(array|int|bool|Filter $filter = false) : int
 	{
 		$ret = self::getCustomerAttributes($filter);
-		if ($ret !== false && !empty($ret->meta) && !empty($ret->meta->pagination) && !empty($ret->meta->pagination->total_pages)) {
-			return $ret->meta->pagination->total_pages;
+
+		if (!empty($ret->meta) && !empty($ret->meta->pagination) && !empty($ret->meta->pagination->total_pages)) {
+			return (int)$ret->meta->pagination->total_pages;
 		}
 		
-		return false;
+		return 0;
 	}
 
 	/**
 	 * The total number of customers in the collection.
 	 *
-	 * @param mixed $filter
+	 * @param array|int|bool|Filter $filter
 	 * @return int
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCustomerAttributeValuesCount($filter=false)
+	public static function getCustomerAttributeValuesCount(array|int|bool|Filter $filter = false) : int
 	{
 		$ret = self::getCustomerAttributeValues($filter);
-		if ($ret !== false && !empty($ret->meta) && !empty($ret->meta->pagination) && !empty($ret->meta->pagination->total_pages)) {
-			return $ret->meta->pagination->total_pages;
+
+		if (!empty($ret->meta) && !empty($ret->meta->pagination) && !empty($ret->meta->pagination->total_pages)) {
+			return (int)$ret->meta->pagination->total_pages;
 		}
 
-		return false;
+		return 0;
 	}
 
 	/**
 	 * Bulk delete customers.
 	 *
-	 * @param mixed $filter
-	 * @return array
+	 * @param array|int|bool|Filter $filter
+	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteCustomers($filter=false)
+	public static function deleteCustomers(array|int|bool|Filter $filter = false) : mixed
 	{
 		$filter = Filter::create($filter);
 		return self::deleteResource('/customers' . $filter->toQuery());
@@ -1630,12 +1674,12 @@ class Client
 	 * A single customer by given id.
 	 *
 	 * @param int $id customer id
-	 * @return Resources\Customer
+	 * @return Resource|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCustomer($id)
+	public static function getCustomer(int $id) : Resource|string
 	{
 		return self::getResource('/customers/' . $id, 'Customer');
 	}
@@ -1649,7 +1693,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createCustomer($object)
+	public static function createCustomer($object) : mixed
 	{
 		return self::createResource('/customers', $object);
 	}
@@ -1664,7 +1708,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateCustomer($id, $object)
+	public static function updateCustomer(int $id, $object) : mixed
 	{
 		return self::updateResource('/customers/' . $id, $object);
 	}
@@ -1678,7 +1722,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteCustomer($id)
+	public static function deleteCustomer(int $id) : mixed
 	{
 		return self::deleteResource('/customers/' . $id);
 	}
@@ -1687,12 +1731,12 @@ class Client
 	 * A list of addresses belonging to the given customer.
 	 *
 	 * @param int $id customer id
-	 * @return array
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCustomerAddresses($id)
+	public static function getCustomerAddresses(int $id) : array|string
 	{
 		return self::getCollection('/customers/' . $id . '/addresses', 'Address');
 	}
@@ -1700,13 +1744,13 @@ class Client
 	/**
 	 * Returns the collection of customer addresses
 	 *
-	 * @param mixed $filter
-	 * @return array
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCustomersAddresses($filter=false)
+	public static function getCustomersAddresses(array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCollection('/customers/addresses' . $filter->toQuery(), "Address");
@@ -1715,13 +1759,13 @@ class Client
 	/**
 	 * The number of customer addresses in the collection.
 	 *
-	 * @param mixed $filter
-	 * @return int
+	 * @param array|int|bool|Filter $filter
+	 * @return int|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCustomersAddressesCount($filter=false)
+	public static function getCustomersAddressesCount(array|int|bool|Filter $filter = false) : int|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCount('/customers/addresses/count' . $filter->toQuery());
@@ -1730,13 +1774,13 @@ class Client
 	/**
 	 * The number of customer groups in the collection.
 	 *
-	 * @param mixed $filter
-	 * @return int
+	 * @param array|int|bool|Filter $filter
+	 * @return int|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCustomerGroupsCount($filter=false)
+	public static function getCustomerGroupsCount(array|int|bool|Filter $filter = false) : int|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCount('/customer_groups/count' . $filter->toQuery());
@@ -1745,40 +1789,57 @@ class Client
 	/**
 	 * Returns the collection of option sets.
 	 *
-	 * @param mixed $filter
-	 * @return array
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getOptionSets($filter=false)
+	public static function getOptionSets(array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCollection('/optionsets' . $filter->toQuery(), 'OptionSet');
 	}
 
-	/** create optionsets **/
-	public static function createOptionsets($object)
+	/**
+     * create optionsets
+     *
+     * @param mixed $object
+     * @return mixed
+     * @throws ClientError
+     * @throws NetworkError
+     * @throws ServerError
+     */
+	public static function createOptionsets($object) : mixed
 	{
 		return self::createResource('/optionsets', $object);
 	}
 
-	/** connect optionsets options **/
-	public static function createOptionsets_Options($object, $id)
+	/**
+     * connect optionsets options
+     *
+     * @param mixed $object
+     * @param int $id
+     * @return mixed
+     * @throws ClientError
+     * @throws NetworkError
+     * @throws ServerError
+     */
+	public static function createOptionsetsOptions($object, int $id) : mixed
 	{
-		return self::createResource('/optionsets/'.$id.'/options', $object);
+		return self::createResource("/optionsets/{$id}/options", $object);
 	}
 
 
 	/**
 	 * Returns the total number of option sets in the collection.
 	 *
-	 * @return int
+	 * @return int|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getOptionSetsCount()
+	public static function getOptionSetsCount() : int|string
 	{
 		return self::getCount('/optionsets/count');
 	}
@@ -1787,12 +1848,12 @@ class Client
 	 * A single option set by given id.
 	 *
 	 * @param int $id option set id
-	 * @return Resources\OptionSet
+	 * @return Resource|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getOptionSet($id)
+	public static function getOptionSet(int $id) : Resource|string
 	{
 		return self::getResource('/optionsets/' . $id, 'OptionSet');
 	}
@@ -1800,13 +1861,13 @@ class Client
 	/**
 	 * Returns the collection of optionset options
 	 *
-	 * @param mixed $filter
-	 * @return array
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getOptionSetOptions($filter=false)
+	public static function getOptionSetOptions(array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCollection('/optionsets/options' . $filter->toQuery(), 'Option');
@@ -1820,16 +1881,16 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getOptionSetOptionsCount()
+	public static function getOptionSetOptionsCount() : int
 	{
 		$page = 1;
-		$filter = Filter::create(array('page'=>$page, 'limit'=>250));
+		$filter = Filter::create([ 'page' => $page, 'limit' => 250 ]);
 		$data = self::getOptionSetOptions($filter);
 		$count = count($data);
 
 		while ($data) {
 			$page++;
-			$filter = Filter::create(array('page'=>$page, 'limit'=>250));
+			$filter = Filter::create([ 'page' => $page, 'limit' => 250 ]);
 			$data = self::getOptionSetOptions($filter);
 			$count += count($data);
 		}
@@ -1840,12 +1901,12 @@ class Client
 	/**
 	 * Status codes used to represent the state of an order.
 	 *
-	 * @return array
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getOrderStatuses()
+	public static function getOrderStatuses() : array|string
 	{
 		return self::getCollection('/orderstatuses', 'OrderStatus');
 	}
@@ -1853,12 +1914,12 @@ class Client
 	/**
 	 * Enabled shipping methods.
 	 *
-	 * @return array
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getShippingMethods()
+	public static function getShippingMethods() : array|string
 	{
 		return self::getCollection('/shipping/methods', 'ShippingMethod');
 	}
@@ -1866,13 +1927,13 @@ class Client
 	/**
 	 * Get collection of skus for all products
 	 *
-	 * @param array $filter
-	 * @return mixed
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getSkus($filter = array())
+	public static function getSkus(array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCollection('/products/skus' . $filter->toQuery(), 'Sku');
@@ -1881,14 +1942,14 @@ class Client
 	/**
 	 * Create a SKU
 	 *
-	 * @param $productId
+	 * @param int $productId
 	 * @param $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createSku($productId, $object)
+	public static function createSku(int $productId, $object) : mixed
 	{
 		return self::createResource('/products/' . $productId . '/skus', $object);
 	}
@@ -1896,14 +1957,14 @@ class Client
 	/**
 	 * Update sku
 	 *
-	 * @param $id
+	 * @param int $id
 	 * @param $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateSku($id, $object)
+	public static function updateSku(int $id, $object) : mixed
 	{
 		return self::updateResource('/product/skus/' . $id, $object);
 	}
@@ -1911,12 +1972,12 @@ class Client
 	/**
 	 * Returns the total number of SKUs in the collection.
 	 *
-	 * @return int
+	 * @return int|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getSkusCount()
+	public static function getSkusCount() : int|string
 	{
 		return self::getCount('/products/skus/count');
 	}
@@ -1925,12 +1986,12 @@ class Client
 	 * Get a single coupon by given id.
 	 *
 	 * @param int $id customer id
-	 * @return Resources\Coupon
+	 * @return Resource|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCoupon($id)
+	public static function getCoupon(int $id) : Resource|string
 	{
 		return self::getResource('/coupons/' . $id, 'Coupon');
 	}
@@ -1938,13 +1999,13 @@ class Client
 	/**
 	 * Get coupons
 	 *
-	 * @param array $filter
-	 * @return mixed
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCoupons($filter = array())
+	public static function getCoupons(array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCollection('/coupons' . $filter->toQuery(), 'Coupon');
@@ -1959,7 +2020,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createCoupon($object)
+	public static function createCoupon($object) : mixed
 	{
 		return self::createResource('/coupons', $object);
 	}
@@ -1967,14 +2028,14 @@ class Client
 	/**
 	 * Update coupon
 	 *
-	 * @param $id
-	 * @param $object
+	 * @param int $id
+	 * @param mixed $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateCoupon($id, $object)
+	public static function updateCoupon(int $id, $object) : mixed
 	{
 		return self::updateResource('/coupons/' . $id, $object);
 	}
@@ -1988,7 +2049,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteCoupon($id)
+	public static function deleteCoupon(int $id) : mixed
 	{
 		return self::deleteResource('/coupons/' . $id);
 	}
@@ -2001,7 +2062,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteAllCoupons()
+	public static function deleteAllCoupons() : mixed
 	{
 		return self::deleteResource('/coupons');
 	}
@@ -2009,12 +2070,12 @@ class Client
 	/**
 	 * Return the number of coupons
 	 *
-	 * @return int
+	 * @return int|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCouponsCount()
+	public static function getCouponsCount() : int|string
 	{
 		return self::getCount('/coupons/count');
 	}
@@ -2022,13 +2083,13 @@ class Client
 	/**
 	 * Returns the collection of redirects
 	 *
-	 * @param mixed $filter
-	 * @return array
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getRedirects($filter=false)
+	public static function getRedirects(array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCollection('/redirects' . $filter->toQuery(), 'OptionSet');
@@ -2037,13 +2098,15 @@ class Client
 	/**
 	 * The total number of redirects in the collection.
 	 *
-	 * @param mixed $filter
-	 * @return int
+	 * @param array|int|bool|Filter $filter
+	 * @return int|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
+     *
+     * @todo ...the api path is for customer groups
 	 */
-	public static function getRedirectsCount($filter=false)
+	public static function getRedirectsCount(array|int|bool|Filter $filter = false) : int|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCount('/customer_groups/count');
@@ -2052,12 +2115,12 @@ class Client
 	/**
 	 * The request logs with usage history statistics.
 	 *
-	 * @return mixed
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getRequestLogs()
+	public static function getRequestLogs() : array|string
 	{
 		return self::getCollection('/requestlogs', 'RequestLog');
 	}
@@ -2070,10 +2133,9 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getStore()
+	public static function getStore() : mixed
 	{
-		$response = self::connection()->get(self::$api_path . '/store');
-		return $response;
+        return self::connection()->get(self::$api_path . '/store');
 	}
 
 	/**
@@ -2086,7 +2148,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getRequestsRemaining()
+	public static function getRequestsRemaining() : int
 	{
 		$limit = self::connection()->getHeader('x-bc-apilimit-remaining');
 
@@ -2104,92 +2166,92 @@ class Client
 	/**
 	 * Get a single shipment by given id.
 	 *
-	 * @param $orderID
-	 * @param $shipmentID
-	 * @return mixed
+	 * @param int $orderId
+	 * @param int $shipmentId
+	 * @return Resource|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getShipment($orderID, $shipmentID)
+	public static function getShipment($orderId, $shipmentId) : Resource|string
 	{
-		return self::getResource('/orders/' . $orderID . '/shipments/' . $shipmentID, 'Shipment');
+		return self::getResource('/orders/' . $orderId . '/shipments/' . $shipmentId, 'Shipment');
 	}
 
 	/**
 	 * Get shipments for a given order
 	 *
-	 * @param $orderID
-	 * @param array $filter
-	 * @return mixed
+	 * @param $orderId
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getShipments($orderID, $filter = array())
+	public static function getShipments(int $orderId, array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
-		return self::getCollection('/orders/' . $orderID . '/shipments' . $filter->toQuery(), 'Shipment');
+		return self::getCollection("/orders/{$orderId}/shipments" . $filter->toQuery(), 'Shipment');
 	}
 
 	/**
 	 * Create shipment
 	 *
-	 * @param $orderID
-	 * @param $object
+	 * @param $orderId
+	 * @param mixed $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createShipment($orderID, $object)
+	public static function createShipment(int $orderId, $object) : mixed
 	{
-		return self::createResource('/orders/' . $orderID . '/shipments', $object);
+		return self::createResource("/orders/{$orderId}/shipments", $object);
 	}
 
 	/**
 	 * Update shipment
 	 *
-	 * @param $orderID
-	 * @param $shipmentID
-	 * @param $object
+	 * @param int $orderId
+	 * @param int $shipmentId
+	 * @param mixed $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateShipment($orderID, $shipmentID, $object)
+	public static function updateShipment(int $orderId, int $shipmentId, mixed $object) : mixed
 	{
-		return self::updateResource('/orders/' . $orderID . '/shipments/' . $shipmentID, $object);
+		return self::updateResource("/orders/{$orderId}/shipments/" . $shipmentId, $object);
 	}
 
 	/**
 	 * Delete the given shipment.
 	 *
-	 * @param $orderID
-	 * @param $shipmentID
+	 * @param int $orderId
+	 * @param int $shipmentId
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteShipment($orderID, $shipmentID)
+	public static function deleteShipment(int $orderId, int $shipmentId) : mixed
 	{
-		return self::deleteResource('/orders/' . $orderID . '/shipments/' . $shipmentID);
+		return self::deleteResource("/orders/{$orderId}/shipments/" . $shipmentId);
 	}
 
 	/**
 	 * Delete all Shipments for the given order.
 	 *
-	 * @param $orderID
+	 * @param int $orderId
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteAllShipmentsForOrder($orderID)
+	public static function deleteAllShipmentsForOrder(int $orderId) : mixed
 	{
-		return self::deleteResource('/orders/' . $orderID . '/shipments');
+		return self::deleteResource("/orders/{$orderId}/shipments");
 	}
 
 	/**
@@ -2201,7 +2263,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createCurrency($object)
+	public static function createCurrency($object) : mixed
 	{
 		return self::createResource('/currencies', $object);
 	}
@@ -2210,12 +2272,12 @@ class Client
 	 * Returns a single currency resource by the given id.
 	 *
 	 * @param int $id currency id
-	 * @return Resources\Currency|string
+	 * @return Resource|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCurrency($id)
+	public static function getCurrency(int $id) : Resource|string
 	{
 		return self::getResource('/currencies/' . $id, 'Currency');
 	}
@@ -2230,7 +2292,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateCurrency($id, $object)
+	public static function updateCurrency(int $id, $object) : mixed
 	{
 		return self::updateResource('/currencies/' . $id, $object);
 	}
@@ -2244,7 +2306,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteCurrency($id)
+	public static function deleteCurrency(int $id) : mixed
 	{
 		return self::deleteResource('/currencies/' . $id);
 	}
@@ -2252,13 +2314,13 @@ class Client
 	/**
 	 * Returns the default collection of currencies.
 	 *
-	 * @param array $filter
-	 * @return mixed array|string list of currencies or XML string if useXml is true
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string list of currencies or XML string if useXml is true
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCurrencies($filter = array())
+	public static function getCurrencies(array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCollection('/currencies' . $filter->toQuery(), 'Currency');
@@ -2267,12 +2329,12 @@ class Client
 	/**
 	 * get list of webhooks
 	 *
-	 * @return 	array
+	 * @return 	array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getWebhooks()
+	public static function getWebhooks() : array|string
 	{
 		return self::getCollection('/hooks', 'Webhook');
 	}
@@ -2286,7 +2348,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getWebhook($id)
+	public static function getWebhook(int $id) : Resource|string
 	{
 		return self::getResource('/hooks/' . $id, 'Webhook');
 	}
@@ -2294,12 +2356,12 @@ class Client
 	/**
 	 * create webhook
 	 * @param 	\stdClass 	$object 	webhook params
-	 * @return 	\stdClass
+	 * @return 	mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createWebhook($object)
+	public static function createWebhook($object) : mixed
 	{
 		return self::createResource('/hooks', $object);
 	}
@@ -2313,7 +2375,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateWebhook($id, $object)
+	public static function updateWebhook(int $id, $object) : mixed
 	{
 		return self::updateResource('/hooks/' . $id, $object);
 	}
@@ -2326,7 +2388,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteWebhook($id)
+	public static function deleteWebhook(int $id) : mixed
 	{
 		return self::deleteResource('/hooks/' . $id);
 	}
@@ -2334,12 +2396,12 @@ class Client
 	/**
 	 * Get all content pages
 	 *
-	 * @return mixed
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getPages()
+	public static function getPages() : array|string
 	{
 		return self::getCollection('/pages', 'Page');
 	}
@@ -2348,12 +2410,12 @@ class Client
 	 * Get single content pages
 	 *
 	 * @param int $pageId
-	 * @return mixed
+	 * @return Resource|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getPage($pageId)
+	public static function getPage(int $pageId) : Resource|string
 	{
 		return self::getResource('/pages/' . $pageId, 'Page');
 	}
@@ -2367,7 +2429,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createPage($object)
+	public static function createPage($object) : mixed
 	{
 		return self::createResource('/pages', $object);
 	}
@@ -2382,7 +2444,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updatePage($pageId, $object)
+	public static function updatePage(int $pageId, $object) : mixed
 	{
 		return self::updateResource('/pages/' . $pageId, $object);
 	}
@@ -2396,7 +2458,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deletePage($pageId)
+	public static function deletePage(int $pageId) : mixed
 	{
 		return self::deleteResource('/pages/' . $pageId);
 	}
@@ -2410,7 +2472,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createGiftCertificate($object)
+	public static function createGiftCertificate($object) : mixed
 	{
 		return self::createResource('/gift_certificates', $object);
 	}
@@ -2419,12 +2481,12 @@ class Client
 	 * Get a Gift Certificate
 	 *
 	 * @param int $giftCertificateId
-	 * @return mixed
+	 * @return Resource|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getGiftCertificate($giftCertificateId)
+	public static function getGiftCertificate(int $giftCertificateId) : Resource|string
 	{
 		return self::getResource('/gift_certificates/' . $giftCertificateId);
 	}
@@ -2432,13 +2494,13 @@ class Client
 	/**
 	 * Return the collection of all gift certificates.
 	 *
-	 * @param array $filter
-	 * @return mixed
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getGiftCertificates($filter = array())
+	public static function getGiftCertificates(array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCollection('/gift_certificates' . $filter->toQuery());
@@ -2454,7 +2516,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateGiftCertificate($giftCertificateId, $object)
+	public static function updateGiftCertificate(int $giftCertificateId, $object) : mixed
 	{
 		return self::updateResource('/gift_certificates/' . $giftCertificateId, $object);
 	}
@@ -2468,7 +2530,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteGiftCertificate($giftCertificateId)
+	public static function deleteGiftCertificate(int $giftCertificateId) : mixed
 	{
 		return self::deleteResource('/gift_certificates/' . $giftCertificateId);
 	}
@@ -2481,7 +2543,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteAllGiftCertificates()
+	public static function deleteAllGiftCertificates() : mixed
 	{
 		return self::deleteResource('/gift_certificates');
 	}
@@ -2496,7 +2558,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createProductReview($productId, $object)
+	public static function createProductReview(int $productId, $object) : mixed
 	{
 		return self::createResource('/products/' . $productId . '/reviews', $object);
 	}
@@ -2504,14 +2566,14 @@ class Client
 	/**
 	 * Create Product Bulk Discount rules
 	 *
-	 * @param string $productId
+	 * @param int $productId
 	 * @param array $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createProductBulkPricingRules($productId, $object)
+	public static function createProductBulkPricingRules(int $productId, $object) : mixed
 	{
 		return self::createResource('/products/' . $productId . '/discount_rules', $object);
 	}
@@ -2525,7 +2587,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createMarketingBanner($object)
+	public static function createMarketingBanner($object) : mixed
 	{
 		return self::createResource('/banners', $object);
 	}
@@ -2533,12 +2595,12 @@ class Client
 	/**
 	 * Get all Marketing Banners
 	 *
-	 * @return mixed
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getMarketingBanners()
+	public static function getMarketingBanners() : array|string
 	{
 		return self::getCollection('/banners');
 	}
@@ -2551,7 +2613,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteAllMarketingBanners()
+	public static function deleteAllMarketingBanners() : mixed
 	{
 		return self::deleteResource('/banners');
 	}
@@ -2559,60 +2621,60 @@ class Client
 	/**
 	 * Delete a specific Marketing Banner
 	 *
-	 * @param int $bannerID
+	 * @param int $bannerId
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteMarketingBanner($bannerID)
+	public static function deleteMarketingBanner(int $bannerId) : mixed
 	{
-		return self::deleteResource('/banners/' . $bannerID);
+		return self::deleteResource('/banners/' . $bannerId);
 	}
 
 	/**
 	 * Update an existing banner
 	 *
-	 * @param int $bannerID
+	 * @param int $bannerId
 	 * @param array $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateMarketingBanner($bannerID, $object)
+	public static function updateMarketingBanner(int $bannerId, $object) : mixed
 	{
-		return self::updateResource('/banners/' . $bannerID, $object);
+		return self::updateResource('/banners/' . $bannerId, $object);
 	}
 
 	/**
 	 * Add a address to the customer's address book.
 	 *
-	 * @param int $customerID
+	 * @param int $customerId
 	 * @param array $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createCustomerAddress($customerID, $object)
+	public static function createCustomerAddress($customerId, $object) : mixed
 	{
-		return self::createResource('/customers/' . $customerID . '/addresses', $object);
+		return self::createResource('/customers/' . $customerId . '/addresses', $object);
 	}
 
 	/**
 	 * Create a product rule
 	 *
-	 * @param int $productID
+	 * @param int $productId
 	 * @param array $object
 	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createProductRule($productID, $object)
+	public static function createProductRule(int $productId, $object) : mixed
 	{
-		return self::createResource('/products/' . $productID . '/rules', $object);
+		return self::createResource('/products/' . $productId . '/rules', $object);
 	}
 
 	/**
@@ -2624,7 +2686,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createCustomerGroup($object)
+	public static function createCustomerGroup($object) : mixed
 	{
 		return self::createResource('/customer_groups', $object);
 	}
@@ -2632,12 +2694,12 @@ class Client
 	/**
 	 * Get list of customer groups
 	 *
-	 * @return mixed
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCustomerGroups()
+	public static function getCustomerGroups() : array|string
 	{
 		return self::getCollection('/customer_groups');
 	}
@@ -2651,7 +2713,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteCustomerGroup($customerGroupId)
+	public static function deleteCustomerGroup(int $customerGroupId) : mixed
 	{
 		return self::deleteResource('/customer_groups/' . $customerGroupId);
 	}
@@ -2664,7 +2726,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteAllCustomers()
+	public static function deleteAllCustomers() : mixed
 	{
 		return self::deleteResource('/customers');
 	}
@@ -2677,7 +2739,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteAllOptions()
+	public static function deleteAllOptions() : mixed
 	{
 		return self::deleteResource('/options');
 	}
@@ -2692,7 +2754,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createOptionValue($optionId, $object)
+	public static function createOptionValue(int $optionId, $object) : mixed
 	{
 		return self::createResource('/options/' . $optionId . '/values', $object);
 	}
@@ -2705,7 +2767,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteAllOptionSets()
+	public static function deleteAllOptionSets() : mixed
 	{
 		return self::deleteResource('/optionsets');
 	}
@@ -2721,7 +2783,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateOptionValue($optionId, $optionValueId, $object)
+	public static function updateOptionValue(int $optionId, int $optionValueId, $object) : mixed
 	{
 		return self::updateResource(
 			'/options/' . $optionId . '/values/' . $optionValueId,
@@ -2732,13 +2794,13 @@ class Client
 	/**
 	 * get list of blog posts
 	 *
-	 * @param mixed $filter
-	 * @return 	array
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getBlogPosts($filter=false)
+	public static function getBlogPosts(array|int|bool|Filter $filter = false) : array|string
 	{
 		$filter = Filter::create($filter);
 		return self::getCollection('/blog/posts' . $filter->toQuery(), 'BlogPost');
@@ -2747,69 +2809,73 @@ class Client
 	/**
 	 * get a specific blog post by id
 	 *
-	 * @param 	int 		$id 		post id
-	 * @return 	\stdClass 	$object
+	 * @param 	int $id post id
+	 * @return 	Resource|string $object
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getBlogPost($id)
+	public static function getBlogPost(int $id) : Resource|string
 	{
 		return self::getResource('/blog/posts/' . $id, 'BlogPost');
 	}
 
 	/**
 	 * create blog post
-	 * @param 	\stdClass 	$object 	post params
-	 * @return 	\stdClass
+	 * @param \stdClass $object post params
+	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createBlogPost($object)
+	public static function createBlogPost($object) : mixed
 	{
 		return self::createResource('/blog/posts', $object);
 	}
 
 	/**
 	 * update blog post
-	 * @param 	int 		$id 		post id
-	 * @param 	\stdClass 	$object 	post params
-	 * @return 	\stdClass
+	 * @param int $id post id
+	 * @param  \stdClass $object post params
+	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateBlogPost($id, $object)
+	public static function updateBlogPost(int $id, $object) : mixed
 	{
 		return self::updateResource('/blog/posts/' . $id, $object);
 	}
 
 	/**
 	 * delete a blog post
-	 * @param 	int 		$id 		post id
-	 * @return 	\stdClass
+	 * @param int $id post id
+	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteBlogPost($id)
+	public static function deleteBlogPost(int $id) : mixed
 	{
 		return self::deleteResource('/blog/posts/' . $id);
 	}
     
     /**
      * Get v3 resource
-     * @param $path   path of resource
-	 * @return mixed Resource|string resource object or XML string if useXml is true
+     * @param string $path path of resource
+	 * @return Resource|string resource object or XML string if useXml is true
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
      */
-    public static function getV3Resource($path) {
+    public static function getV3Resource(string $path) : Resource|string
+    {
         self::setVersion('v3');
 		$ret = self::getResource($path);
+
+        // reset version to v2
         self::setVersion('v2');
+
         return $ret;
     }
     
@@ -2823,42 +2889,47 @@ class Client
 	 * @throws ServerError
 	 * @throws NetworkError
 	 */
-	public static function deleteV3Resource($path)
+	public static function deleteV3Resource($path) : mixed
 	{        
         self::setVersion('v3');
 		$ret = self::deleteResource($path);
+
+        // reset version to v2
         self::setVersion('v2');
+
         return $ret;
 	}
 
 	/**
 	 * create catalog
-     * @param   String      $catalogPath    path of request
-	 * @param 	\stdClass 	$object 	    catalog params
-	 * @return 	\stdClass
+     * @param  string $catalogPath path of request
+	 * @param \stdClass $object catalog params
+	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createCatalog($catalogPath, $object)
+	public static function createCatalog(string $catalogPath, $object) : mixed
 	{
         self::setVersion('v3');
         $ret = self::createResource('/catalog' . $catalogPath, $object);
+
+        // reset version to v2
         self::setVersion('v2');
+
         return $ret;
     }
 
 	/**
 	 * get a specific catalog by id
 	 *
-     * @param String $catalogPath   api endpoint
-	 * @param int    $id            id of catalog item
-	 * @return 	\stdClass 	$object
+     * @param string $catalogPath api endpoint
+	 * @return Resource|string
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCatalog($catalogPath)
+	public static function getCatalog(string $catalogPath) : Resource|string
 	{
         return self::getV3Resource('/catalog' . $catalogPath);
     }
@@ -2866,32 +2937,35 @@ class Client
 	/**
 	 * Returns the default collection of products.
 	 *
-     * @param String $catalogPath api endpoint
-	 * @param mixed $filter
-	 * @return mixed array|string list of products or XML string if useXml is true
+     * @param string $catalogPath api endpoint
+	 * @param array|int|bool|Filter $filter
+	 * @return Resource|string list of products or XML string if useXml is true
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-    public static function getCatalogs($catalogPath, $filter=false)
+    public static function getCatalogs(string $catalogPath, array|int|bool|Filter $filter = false) : Resource|string
 	{
 		$filter = Filter::create($filter);
+
         return self::getV3Resource('/catalog' . $catalogPath . $filter->toQuery());
     }
 
 	/**
 	 * update catalog
-	 * @param 	int 		$id 		id of catalog item
-	 * @param 	\stdClass 	$object 	catalog params
-	 * @return 	\stdClass
+	 * @param string $catalogPath api endpoint
+	 * @param \stdClass $object catalog params
+	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateCatalog($catalogPath, $object)
+	public static function updateCatalog(string $catalogPath, $object) : mixed
 	{
         self::setVersion('v3');
         $ret = self::updateResource('/catalog' . $catalogPath, $object);
+
+        // reset version to v2
         self::setVersion('v2');
         
         return $ret;
@@ -2899,13 +2973,13 @@ class Client
 
 	/**
 	 * delete catalog
-	 * @param 	int 		$id 		id of catalog item
-	 * @return 	\stdClass
+	 * @param string $catalogPath api endpoint
+	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteCatalog($catalogPath)
+	public static function deleteCatalog($catalogPath) : mixed
 	{
         return self::deleteV3Resource('/catalog' . $catalogPath);
 	}
@@ -2919,7 +2993,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createCatalogProduct($object)
+	public static function createCatalogProduct($object) : mixed
 	{
 		return self::createCatalog('/products', $object);
 	}
@@ -2928,12 +3002,12 @@ class Client
 	 * Get single catalog product.
 	 *
 	 * @param int $id catalog product id
-	 * @return mixed array|string list of products or XML string if useXml is true
+	 * @return Resource|string list of products or XML string if useXml is true
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCatalogProduct($id)
+	public static function getCatalogProduct(int $id) : Resource|string
 	{
 		return self::getCatalogs('/products/' . $id);
     }
@@ -2941,40 +3015,40 @@ class Client
 	/**
 	 * Returns the default collection of catalog products.
 	 *
-	 * @param mixed $filter
-	 * @return mixed array|string list of products or XML string if useXml is true
+	 * @param array|int|bool|Filter $filter
+	 * @return Resource|string list of products or XML string if useXml is true
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCatalogProducts($filter=false)
+	public static function getCatalogProducts(array|int|bool|Filter $filter = false) : Resource|string
 	{
 		return self::getCatalogs('/products', $filter);
     }
 
 	/**
 	 * update catalog product
-	 * @param 	int 		$id 		catalog product id
-	 * @param 	\stdClass 	$object 	catalog product params
-	 * @return 	\stdClass
+	 * @param int $id catalog product id
+	 * @param \stdClass $object catalog product params
+	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateCatalogProduct($id, $object)
+	public static function updateCatalogProduct(int $id, $object) : mixed
 	{
 		return self::updateCatalog('/products/' . $id, $object);
 	}
 
 	/**
 	 * delete a catalog product
-     * @param int $id       product id
-	 * @return 	\stdClass
+     * @param int $id product id
+	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteCatalogProduct($id)
+	public static function deleteCatalogProduct(int $id) : mixed
 	{
 		return self::deleteCatalog('/products/' . $id);
 	}
@@ -2982,13 +3056,13 @@ class Client
 	/**
 	 * delete catalog products by filter.
 	 *
-	 * @param mixed $filter
-	 * @return boolean when filter is false | \stdClass
+	 * @param array|int|bool|Filter $filter
+	 * @return mixed when filter is false | \stdClass
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteCatalogProducts($filter=false)
+	public static function deleteCatalogProducts(array|int|bool|Filter $filter = false) : mixed
 	{
         if ($filter === false) {
             return false;
@@ -3007,7 +3081,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createCatalogBrand($object)
+	public static function createCatalogBrand($object): mixed
 	{
 		return self::createCatalog('/brands', $object);
 	}
@@ -3016,12 +3090,12 @@ class Client
 	 * Get single catalog brand.
 	 *
 	 * @param int $id catalog brand id
-	 * @return mixed array|string list of products or XML string if useXml is true
+	 * @return array|string list of products or XML string if useXml is true
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCatalogBrand($id)
+	public static function getCatalogBrand(int $id) : array|string
 	{
 		return self::getCatalogs('/brands/' . $id);
     }
@@ -3029,13 +3103,13 @@ class Client
 	/**
 	 * Returns the default collection of catalog brands.
 	 *
-	 * @param mixed $filter
-	 * @return mixed array|string list of products or XML string if useXml is true
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string list of products or XML string if useXml is true
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCatalogBrands($filter=false)
+	public static function getCatalogBrands(array|int|bool|Filter $filter = false) : array|string
 	{
 		return self::getCatalogs('/brands', $filter);
 	}
@@ -3044,12 +3118,12 @@ class Client
 	 * update catalog brand
 	 * @param 	int 		$id 		catalog brand id
 	 * @param 	\stdClass 	$object 	catalog brand params
-	 * @return 	\stdClass
+	 * @return 	mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateCatalogBrand($id, $object)
+	public static function updateCatalogBrand(int $id, $object) : mixed
 	{
 		return self::updateCatalog('/brands/' . $id, $object);
 	}
@@ -3057,12 +3131,12 @@ class Client
 	/**
 	 * delete a catalog brand
      * @param int $id       brand id
-	 * @return 	\stdClass
+	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteCatalogBrand($id)
+	public static function deleteCatalogBrand(int $id) : mixed
 	{
 		return self::deleteCatalog('/brands/' . $id);
 	}
@@ -3077,7 +3151,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createCatalogProductMetaFields($id, $object)
+	public static function createCatalogProductMetaFields(int $id, $object) : mixed
 	{
 		return self::createCatalog('/products/' . $id . '/metafields', $object);
     }
@@ -3086,13 +3160,13 @@ class Client
 	 * Returns catalog product meta field.
 	 *
      * @param int $id product id
-	 * @param mixed $filter
-	 * @return mixed array|string list of products or XML string if useXml is true
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string list of products or XML string if useXml is true
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCatalogProductMetaFields($id, $filter=false)
+	public static function getCatalogProductMetaFields($id, array|int|bool|Filter $filter = false) : array|string
 	{
 		return self::getCatalogs('/products/' . $id . '/metafields', $filter);
 	}
@@ -3100,46 +3174,46 @@ class Client
 	/**
 	 * Get single catalog product meta field.
 	 *
-     * @param int $product_id product id
+     * @param int $productId product id
      * @param int $id product meta field id
-	 * @param mixed $filter
-	 * @return mixed array|string list of products or XML string if useXml is true
+	 * @param array|int|bool|Filter $filter
+	 * @return array|string list of products or XML string if useXml is true
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCatalogProductMetaField($product_id, $id)
+	public static function getCatalogProductMetaField(int $productId, int $id) : array|string
 	{
-		return self::getCatalogs('/products/' . $product_id . '/metafields/' . $id);
+		return self::getCatalogs('/products/' . $productId . '/metafields/' . $id);
 	}
 
 	/**
 	 * update catalog product metafield
-     * @param   int         $product_id product id
-	 * @param 	int 		$id 		metafield id
-	 * @param 	\stdClass 	$object 	metafield params
-	 * @return 	\stdClass
+     * @param int $productId product id
+	 * @param int $id metafield id
+	 * @param \stdClass $object metafield params
+	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateCatalogProductMetaField($product_id, $id, $object)
+	public static function updateCatalogProductMetaField(int $productId, int $id, $object) : mixed
 	{
-		return self::updateCatalog('/products/' . $product_id . '/metafields/' . $id, $object);
+		return self::updateCatalog('/products/' . $productId . '/metafields/' . $id, $object);
 	}
 
 	/**
 	 * delete a catalog product meta field
-     * @param int $product_id       product id
-	 * @param int $id 	metafield id
-	 * @return 	\stdClass
+     * @param int $productId product id
+	 * @param int $id metafield id
+	 * @return 	mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteCatalogProductMetaField($product_id, $id)
+	public static function deleteCatalogProductMetaField(int $productId, int $id) : mixed
 	{
-		return self::deleteCatalog('/products/' . $product_id . '/metafields/' . $id);
+		return self::deleteCatalog('/products/' . $productId . '/metafields/' . $id);
 	}
 
 	/**
@@ -3152,7 +3226,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createCatalogProductImage($id, $object)
+	public static function createCatalogProductImage(int $id, $object) : mixed
 	{
 		return self::createCatalog('/products/' . $id . '/images', $object);
 	}
@@ -3160,59 +3234,59 @@ class Client
 	/**
 	 * Get single catalog product image.
 	 *
-	 * @param int $product_id catalog product id
+	 * @param int $productId catalog product id
 	 * @param int $id catalog product image id
-	 * @return mixed array|string list of products or XML string if useXml is true
+	 * @return array|string list of products or XML string if useXml is true
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCatalogProductImage($product_id, $id)
+	public static function getCatalogProductImage(int $productId, int $id) : array|string
 	{
-		return self::getCatalogs('/products/' . $product_id . '/images/' . $id);
+		return self::getCatalogs('/products/' . $productId . '/images/' . $id);
 	}
 
 	/**
 	 * Returns the default collection of catalog product images.
 	 *
 	 * @param int $id catalog product id
-	 * @return mixed array|string list of products or XML string if useXml is true
+	 * @return array|string list of products or XML string if useXml is true
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCatalogProductImages($id, $filter=false)
+	public static function getCatalogProductImages(int $id, array|int|bool|Filter $filter = false) : array|string
 	{
 		return self::getCatalogs('/products/' . $id . '/images', $filter);
 	}
 
 	/**
 	 * update catalog product image
-     * @param   int         $product_id product id
-	 * @param 	int 		$id 		image id
-	 * @param 	\stdClass 	$object 	image params
-	 * @return 	\stdClass
+     * @param int $productId product id
+	 * @param int $id image id
+	 * @param \stdClass $object image params
+	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateCatalogProductImage($product_id, $id, $object)
+	public static function updateCatalogProductImage(int $productId, int $id, $object) : mixed
 	{
-		return self::updateCatalog('/products/' . $product_id . '/images/' . $id, $object);
+		return self::updateCatalog('/products/' . $productId . '/images/' . $id, $object);
 	}
 
 	/**
 	 * delete a catalog product image
-     * @param int $product_id       catalog product id
-	 * @param int $id 	        image id
-	 * @return 	\stdClass
+     * @param int $productId catalog product id
+	 * @param int $id image id
+	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteCatalogProductImage($product_id, $id)
+	public static function deleteCatalogProductImage(int $productId, int $id) : mixed
 	{
-		return self::deleteCatalog('/products/' . $product_id . '/images/' . $id);
+		return self::deleteCatalog('/products/' . $productId . '/images/' . $id);
     }
 
 	/**
@@ -3225,7 +3299,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createCatalogProductCustomField($id, $object)
+	public static function createCatalogProductCustomField(int $id, $object) : mixed
 	{
 		return self::createCatalog('/products/' . $id . '/custom-fields', $object);
 	}
@@ -3233,59 +3307,59 @@ class Client
 	/**
 	 * Get single catalog product custom field.
 	 *
-	 * @param int $product_id catalog product id
+	 * @param int $productId catalog product id
 	 * @param int $id catalog product custom field id
-	 * @return mixed array|string list of products or XML string if useXml is true
+	 * @return array|string list of products or XML string if useXml is true
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCatalogProductCustomField($product_id, $id)
+	public static function getCatalogProductCustomField(int $productId, int $id) : array|string
 	{
-		return self::getCatalogs('/products/' . $product_id . '/custom-fields/' . $id);
+		return self::getCatalogs('/products/' . $productId . '/custom-fields/' . $id);
 	}
 
 	/**
 	 * Returns the default collection of catalog product custom fields.
 	 *
 	 * @param int $id catalog product id
-	 * @return mixed array|string list of products or XML string if useXml is true
+	 * @return array|string list of products or XML string if useXml is true
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCatalogProductCustomFields($id, $filter=false)
+	public static function getCatalogProductCustomFields(int $id, array|int|bool|Filter $filter = false) : array|string
 	{
 		return self::getCatalogs('/products/' . $id . '/custom-fields', $filter);
 	}
 
 	/**
 	 * update catalog product custom field
-     * @param   int         $product_id product id
-	 * @param 	int 		$id 		custom field id
-	 * @param 	\stdClass 	$object 	custom field params
-	 * @return 	\stdClass
+     * @param int $productId product id
+	 * @param int $id custom field id
+	 * @param \stdClass $object custom field params
+	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateCatalogProductCustomField($product_id, $id, $object)
+	public static function updateCatalogProductCustomField(int $productId, int $id, $object) : mixed
 	{
-		return self::updateCatalog('/products/' . $product_id . '/custom-fields/' . $id, $object);
+		return self::updateCatalog('/products/' . $productId . '/custom-fields/' . $id, $object);
 	}
 
 	/**
 	 * delete a catalog product custom field
-     * @param int $product_id       catalog product id
-	 * @param int $id 	            custom field id
-	 * @return 	\stdClass
+     * @param int $productId catalog product id
+	 * @param int $id custom field id
+	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteCatalogProductCustomField($product_id, $id)
+	public static function deleteCatalogProductCustomField(int $productId, int $id) : mixed
 	{
-		return self::deleteCatalog('/products/' . $product_id . '/custom-fields/' . $id);
+		return self::deleteCatalog('/products/' . $productId . '/custom-fields/' . $id);
     }
 
 	/**
@@ -3298,7 +3372,7 @@ class Client
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function createCatalogProductBulkPricingRule($id, $object)
+	public static function createCatalogProductBulkPricingRule(int $id, $object) : mixed
 	{
 		return self::createCatalog('/products/' . $id . '/bulk-pricing-rules', $object);
 	}
@@ -3306,58 +3380,58 @@ class Client
 	/**
 	 * Get single catalog product bulk pricing rule.
 	 *
-	 * @param int $product_id catalog product id
+	 * @param int $productId catalog product id
 	 * @param int $id catalog product bulk pricing rule id
-	 * @return mixed array|string list of products or XML string if useXml is true
+	 * @return array|string list of products or XML string if useXml is true
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCatalogProductBulkPricingRule($product_id, $id)
+	public static function getCatalogProductBulkPricingRule(int $productId, int $id) : array|string
 	{
-		return self::getCatalogs('/products/' . $product_id . '/bulk-pricing-rules/' . $id);
+		return self::getCatalogs('/products/' . $productId . '/bulk-pricing-rules/' . $id);
 	}
 
 	/**
 	 * Returns the default collection of catalog product bulk pricing rules.
 	 *
 	 * @param int $id catalog product id
-	 * @return mixed array|string list of products or XML string if useXml is true
+	 * @return array|string list of products or XML string if useXml is true
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function getCatalogProductBulkPricingRules($id, $filter=false)
+	public static function getCatalogProductBulkPricingRules(int $id, array|int|bool|Filter $filter = false) : array|string
 	{
 		return self::getCatalogs('/products/' . $id . '/bulk-pricing-rules', $filter);
 	}
 
 	/**
 	 * update catalog product bulk pricing rules
-     * @param   int         $product_id product id
-	 * @param 	int 		$id 		bulk pricing rules id
-	 * @param 	\stdClass 	$object 	bulk pricing rules params
-	 * @return 	\stdClass
+     * @param int $productId product id
+	 * @param int $id bulk pricing rules id
+	 * @param \stdClass $object bulk pricing rules params
+	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function updateCatalogProductBulkPricingRule($product_id, $id, $object)
+	public static function updateCatalogProductBulkPricingRule(int $productId, int $id, $object) : mixed
 	{
-		return self::updateCatalog('/products/' . $product_id . '/bulk-pricing-rules/' . $id, $object);
+		return self::updateCatalog('/products/' . $productId . '/bulk-pricing-rules/' . $id, $object);
 	}
 
 	/**
 	 * delete a catalog product bulk pricing rule
-     * @param int $product_id       catalog product id
-	 * @param int $id 	            bulk pricing rule id
-	 * @return 	\stdClass
+     * @param int $productId catalog product id
+	 * @param int $id bulk pricing rule id
+	 * @return mixed
 	 * @throws ClientError
 	 * @throws NetworkError
 	 * @throws ServerError
 	 */
-	public static function deleteCatalogProductBulkPricingRule($product_id, $id)
+	public static function deleteCatalogProductBulkPricingRule(int $productId, int $id) : mixed
 	{
-		return self::deleteCatalog('/products/' . $product_id . '/bulk-pricing-rules/' . $id);
+		return self::deleteCatalog('/products/' . $productId . '/bulk-pricing-rules/' . $id);
     }
 }
