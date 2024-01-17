@@ -7,21 +7,28 @@ use Bigcommerce\Api\Client;
 
 class Brand extends Resource
 {
+	protected array $ignoreOnCreate = [ 'id' ];
 
-	protected $ignoreOnCreate = array(
-		'id',
-	);
+	protected array $ignoreOnUpdate = [ 'id' ];
 
-	protected $ignoreOnUpdate = array(
-		'id',
-	);
-
-	public function create()
+    /**
+     * @return mixed
+     * @throws \Bigcommerce\Api\ClientError
+     * @throws \Bigcommerce\Api\NetworkError
+     * @throws \Bigcommerce\Api\ServerError
+     */
+	public function create() : mixed
 	{
 		return Client::createBrand($this->getCreateFields());
 	}
 
-	public function update()
+    /**
+     * @return mixed
+     * @throws \Bigcommerce\Api\ClientError
+     * @throws \Bigcommerce\Api\NetworkError
+     * @throws \Bigcommerce\Api\ServerError
+     */
+	public function update() : mixed
 	{
 		return Client::updateBrand($this->id, $this->getUpdateFields());
 	}

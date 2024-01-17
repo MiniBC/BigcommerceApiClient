@@ -9,28 +9,39 @@ use Bigcommerce\Api\Client;
  */
 class Currency extends Resource
 {
-	protected $ignoreOnCreate = array(
-		'date_created',
-		'date_modified',
-	);
+	protected array $ignoreOnCreate = [ 'date_created', 'date_modified' ];
 
-	protected $ignoreOnUpdate = array(
-		'id',
-		'date_created',
-		'date_modified',
-	);
+	protected array $ignoreOnUpdate = [ 'id', 'date_created', 'date_modified' ];
 
-	public function create()
+    /**
+     * @return mixed
+     * @throws \Bigcommerce\Api\ClientError
+     * @throws \Bigcommerce\Api\NetworkError
+     * @throws \Bigcommerce\Api\ServerError
+     */
+	public function create() : mixed
 	{
 		return Client::createCurrency($this->getCreateFields());
 	}
 
-	public function update()
+    /**
+     * @return mixed
+     * @throws \Bigcommerce\Api\ClientError
+     * @throws \Bigcommerce\Api\NetworkError
+     * @throws \Bigcommerce\Api\ServerError
+     */
+	public function update() : mixed
 	{
 		return Client::updateCurrency($this->id, $this->getUpdateFields());
 	}
 
-	public function delete()
+    /**
+     * @return mixed
+     * @throws \Bigcommerce\Api\ClientError
+     * @throws \Bigcommerce\Api\NetworkError
+     * @throws \Bigcommerce\Api\ServerError
+     */
+	public function delete() : mixed
 	{
 		return Client::deleteCurrency($this->id);
 	}

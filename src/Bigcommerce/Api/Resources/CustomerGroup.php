@@ -1,5 +1,4 @@
 <?php
-
 namespace Bigcommerce\Api\Resources;
 
 use Bigcommerce\Api\Resource;
@@ -8,25 +7,28 @@ use Bigcommerce\Api\Client;
 class CustomerGroup extends Resource
 {
 
-	protected $ignoreOnCreate = array(
-		'id',
-	);
+	protected array $ignoreOnCreate = [ 'id' ];
 
-	protected $ignoreOnUpdate = array(
-		'id',
-	);
+	protected array $ignoreOnUpdate = [ 'id' ];
 
-	public function create()
+    /**
+     * @return mixed
+     * @throws \Bigcommerce\Api\ClientError
+     * @throws \Bigcommerce\Api\NetworkError
+     * @throws \Bigcommerce\Api\ServerError
+     */
+	public function create() : mixed
 	{
 		return Client::createCustomerGroup($this->getCreateFields());
 	}
 
-	public function update()
-	{
-		return Client::updateCustomerGroup($this->id, $this->getUpdateFields());
-	}
-
-	public function delete()
+    /**
+     * @return mixed
+     * @throws \Bigcommerce\Api\ClientError
+     * @throws \Bigcommerce\Api\NetworkError
+     * @throws \Bigcommerce\Api\ServerError
+     */
+	public function delete() : mixed
 	{
 		return Client::deleteCustomerGroup($this->id);
 	}

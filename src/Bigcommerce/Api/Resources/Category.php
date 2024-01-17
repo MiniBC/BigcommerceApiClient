@@ -1,5 +1,4 @@
 <?php
-
 namespace Bigcommerce\Api\Resources;
 
 use Bigcommerce\Api\Resource;
@@ -8,22 +7,28 @@ use Bigcommerce\Api\Client;
 class Category extends Resource
 {
 
-	protected $ignoreOnCreate = array(
-		'id',
-		'parent_category_list',
-	);
+	protected array $ignoreOnCreate = [ 'id', 'parent_category_list' ];
 
-	protected $ignoreOnUpdate = array(
-		'id',
-		'parent_category_list',
-	);
+	protected array $ignoreOnUpdate = [ 'id', 'parent_category_list' ];
 
-	public function create()
+    /**
+     * @return mixed
+     * @throws \Bigcommerce\Api\ClientError
+     * @throws \Bigcommerce\Api\NetworkError
+     * @throws \Bigcommerce\Api\ServerError
+     */
+	public function create() : mixed
 	{
 		return Client::createCategory($this->getCreateFields());
 	}
 
-	public function update()
+    /**
+     * @return mixed
+     * @throws \Bigcommerce\Api\ClientError
+     * @throws \Bigcommerce\Api\NetworkError
+     * @throws \Bigcommerce\Api\ServerError
+     */
+	public function update() : mixed
 	{
 		return Client::updateCategory($this->id, $this->getUpdateFields());
 	}
