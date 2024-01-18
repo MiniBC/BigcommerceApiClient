@@ -25,14 +25,14 @@ class Connection
 
 	/**
 	 * The status line of the response.
-	 * @var string|null
+	 * @var string
 	 */
-	private string|null $responseStatusLine;
+	private string $responseStatusLine = '';
 
 	/**
-	 * @var string|null response body
+	 * @var string response body
 	 */
-	private string|null $responseBody;
+	private string $responseBody = '';
 
 	/**
 	 * @var boolean
@@ -70,9 +70,9 @@ class Connection
 	private bool $rawResponse = false;
 
 	/**
-	 * @var string|null Determines the default content type to use with requests and responses.
+	 * @var string Determines the default content type to use with requests and responses.
 	 */
-	private string|null $contentType;
+	private string $contentType = '';
 
 	/**
 	 * @var bool determines if another attempt should be made if the request
