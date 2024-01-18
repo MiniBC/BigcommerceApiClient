@@ -2,33 +2,44 @@
 
 namespace Bigcommerce\Api\Resources;
 
-use Bigcommerce\Api\Resource;
-use Bigcommerce\Api\Client;
+use Bigcommerce\Api\{Resource, Client, ClientError, NetworkError, ServerError};
 
 class OptionSet extends Resource
 {
+    protected array $ignoreOnCreate = [ 'id' ];
 
-	protected $ignoreOnCreate = array(
-		'id',
-	);
+    protected array $ignoreOnUpdate = [ 'id' ];
 
-	protected $ignoreOnUpdate = array(
-		'id',
-	);
-
-	public function options()
+    /**
+     * @return array|string
+     * @throws ClientError
+     * @throws NetworkError
+     * @throws ServerError
+     */
+	public function options() : array|string
 	{
 		return Client::getCollection($this->fields->options->resource, 'OptionSetOption');
 	}
 
-	public function create()
+    /**
+     * @return mixed
+     * @throws ClientError
+     * @throws NetworkError
+     * @throws ServerError
+     */
+	public function create() : mixed
 	{
 		return Client::createResource('/optionsets', $this->getCreateFields());
 	}
 
+    /**
+     * @return void
+     * @throws ClientError
+     * @throws NetworkError
+     * @throws ServerError
+     */
 	public function update()
 	{
 		Client::updateResource('/optionsets/' . $this->id, $this->getUpdateFields());
 	}
-
 }

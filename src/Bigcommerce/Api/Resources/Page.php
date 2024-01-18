@@ -1,40 +1,66 @@
 <?php
+
 namespace Bigcommerce\Api\Resources;
 
-use Bigcommerce\Api\Resource;
-use Bigcommerce\Api\Client;
+use Bigcommerce\Api\{Resource, Client, ClientError, NetworkError, ServerError};
 
 class Page extends Resource
 {
-	protected $ignoreOnCreate = array(
-		'id',
-	);
+    protected array $ignoreOnCreate = [ 'id' ];
 
-	protected $ignoreOnUpdate = array(
-		'id',
-	);
+    protected array $ignoreOnUpdate = [ 'id' ];
 
-	public function create()
+    /**
+     * @return mixed
+     * @throws ClientError
+     * @throws NetworkError
+     * @throws ServerError
+     */
+	public function create() : mixed
 	{
 		return Client::createPage($this->getCreateFields());
 	}
 
-	public function update()
+    /**
+     * @return mixed
+     * @throws ClientError
+     * @throws NetworkError
+     * @throws ServerError
+     */
+	public function update() : mixed
 	{
 		return Client::updatePage($this->id, $this->getUpdateFields());
 	}
 
-	public function delete()
+    /**
+     * @return mixed
+     * @throws ClientError
+     * @throws NetworkError
+     * @throws ServerError
+     */
+	public function delete() : mixed
 	{
 		return Client::deletePage($this->id);
 	}
 
-	public function getAll()
+    /**
+     * @return array|string
+     * @throws ClientError
+     * @throws NetworkError
+     * @throws ServerError
+     */
+	public function getAll() : array|string
 	{
 		return Client::getPages();
 	}
 
-	public function get()
+    /**
+     * @return Resource|string
+     * @throws ClientError
+     * @throws NetworkError
+     * @throws ServerError
+     */
+	public function get() : Resource|string
 	{
 		return Client::getPage($this->id);
 	}

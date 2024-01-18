@@ -1,8 +1,8 @@
 <?php
+
 namespace Bigcommerce\Api\Resources;
 
-use Bigcommerce\Api\Resource;
-use Bigcommerce\Api\Client;
+use Bigcommerce\Api\{Resource, Client, ClientError, NetworkError, ServerError};
 
 /**
  * Represents a single currency.
@@ -15,9 +15,9 @@ class Currency extends Resource
 
     /**
      * @return mixed
-     * @throws \Bigcommerce\Api\ClientError
-     * @throws \Bigcommerce\Api\NetworkError
-     * @throws \Bigcommerce\Api\ServerError
+     * @throws ClientError
+     * @throws NetworkError
+     * @throws ServerError
      */
 	public function create() : mixed
 	{
@@ -26,9 +26,9 @@ class Currency extends Resource
 
     /**
      * @return mixed
-     * @throws \Bigcommerce\Api\ClientError
-     * @throws \Bigcommerce\Api\NetworkError
-     * @throws \Bigcommerce\Api\ServerError
+     * @throws ClientError
+     * @throws NetworkError
+     * @throws ServerError
      */
 	public function update() : mixed
 	{
@@ -37,9 +37,9 @@ class Currency extends Resource
 
     /**
      * @return mixed
-     * @throws \Bigcommerce\Api\ClientError
-     * @throws \Bigcommerce\Api\NetworkError
-     * @throws \Bigcommerce\Api\ServerError
+     * @throws ClientError
+     * @throws NetworkError
+     * @throws ServerError
      */
 	public function delete() : mixed
 	{

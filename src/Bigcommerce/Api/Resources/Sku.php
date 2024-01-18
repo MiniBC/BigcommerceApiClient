@@ -2,25 +2,24 @@
 
 namespace Bigcommerce\Api\Resources;
 
-use Bigcommerce\Api\Resource;
-use Bigcommerce\Api\Client;
+use Bigcommerce\Api\{Resource, Client, ClientError, NetworkError, ServerError};
 
 /**
  * A stock keeping unit for a product.
  */
 class Sku extends Resource
 {
+    protected array $ignoreOnCreate = [ 'product_id' ];
 
-	protected $ignoreOnCreate = array(
-		'product_id',
-	);
+    protected array $ignoreOnUpdate = [ 'id', 'product_id' ];
 
-	protected $ignoreOnUpdate = array(
-		'id',
-		'product_id',
-	);
-
-	public function options()
+    /**
+     * @return array
+     * @throws ClientError
+     * @throws NetworkError
+     * @throws ServerError
+     */
+	public function options() : array
 	{
 		$options = Client::getCollection($this->fields->options->resource, 'SkuOption');
 
@@ -31,14 +30,25 @@ class Sku extends Resource
 		return $options;
 	}
 
-	public function create()
+    /**
+     * @return mixed
+     * @throws ClientError
+     * @throws NetworkError
+     * @throws ServerError
+     */
+	public function create() : mixed
 	{
 		return Client::createResource('/products/' . $this->product_id . '/skus' , $this->getCreateFields());
 	}
 
+    /**
+     * @return void
+     * @throws ClientError
+     * @throws NetworkError
+     * @throws ServerError
+     */
 	public function update()
 	{
 		Client::updateResource('/products/' . $this->product_id . '/skus/' . $this->id , $this->getUpdateFields());
 	}
-
 }

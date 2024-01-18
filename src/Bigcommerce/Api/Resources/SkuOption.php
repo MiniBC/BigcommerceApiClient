@@ -10,49 +10,31 @@ use Bigcommerce\Api\Client;
  */
 class SkuOption extends Resource
 {
+    protected array $ignoreOnCreate = [ 'id' ];
 
-	protected $ignoreOnCreate = array(
-		'id',
-	);
+    protected array $ignoreOnUpdate = [ 'id', 'sku_id' ];
 
-	protected $ignoreOnUpdate = array(
-		'id',
-		'sku_id',
-	);
+	public int $product_id;
 
-	public $product_id;
-
-	public function create()
+    /**
+     * @return mixed
+     * @throws \Bigcommerce\Api\ClientError
+     * @throws \Bigcommerce\Api\NetworkError
+     * @throws \Bigcommerce\Api\ServerError
+     */
+	public function create() : mixed
 	{
 		return Client::createResource('/products/' . $this->product_id . '/skus/' . $this->sku_id . '/options' , $this->getCreateFields());
 	}
 
+    /**
+     * @return void
+     * @throws \Bigcommerce\Api\ClientError
+     * @throws \Bigcommerce\Api\NetworkError
+     * @throws \Bigcommerce\Api\ServerError
+     */
 	public function update()
 	{
 		Client::updateResource('/products/' . $this->product_id . '/skus/' . $this->sku_id . '/options/' .$this->id , $this->getUpdateFields());
 	}
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
