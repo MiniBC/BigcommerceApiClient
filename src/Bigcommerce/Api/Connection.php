@@ -14,25 +14,25 @@ class Connection
 	private CurlHandle $curl;
 
 	/**
-	 * @var array<string, string> hash of HTTP request headers
+	 * @var array<string,string> hash of HTTP request headers
 	 */
 	private array $headers = [];
 
 	/**
-	 * @var array<string, string> hash of headers from HTTP response
+	 * @var array<string,string> hash of headers from HTTP response
 	 */
 	private array $responseHeaders = [];
 
 	/**
 	 * The status line of the response.
-	 * @var string
+	 * @var string|null
 	 */
-	private string $responseStatusLine;
+	private string|null $responseStatusLine;
 
 	/**
-	 * @var string response body
+	 * @var string|null response body
 	 */
-	private string $responseBody;
+	private string|null $responseBody;
 
 	/**
 	 * @var boolean
@@ -70,9 +70,9 @@ class Connection
 	private bool $rawResponse = false;
 
 	/**
-	 * Determines the default content type to use with requests and responses.
+	 * @var string|null Determines the default content type to use with requests and responses.
 	 */
-	private string $contentType;
+	private string|null $contentType;
 
 	/**
 	 * @var bool determines if another attempt should be made if the request
@@ -295,7 +295,7 @@ class Connection
 	 */
 	private function getContentType() : string
 	{
-		return ($this->contentType) ? $this->contentType : self::MEDIA_TYPE_JSON;
+		return ($this->contentType) ?: self::MEDIA_TYPE_JSON;
 	}
 
 	/**
