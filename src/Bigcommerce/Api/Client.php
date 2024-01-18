@@ -2,7 +2,9 @@
 namespace Bigcommerce\Api;
 
 use Firebase\JWT\JWT;
-use \{Exception, stdClass, DateTime};
+use \Exception;
+use \stdClass;
+use \DateTime;
 
 /**
  * Bigcommerce API Client.
@@ -12,11 +14,11 @@ class Client
     /** @var string Full Store URL to connect to */
 	static private string $store_url;
 
-    /** @var string Username to connect to the store API with */
-	static private string $username;
+    /** @var string|null Username to connect to the store API with */
+	static private string|null $username;
 
-    /** @var string API key */
-	static private string $api_key;
+    /** @var string|null API key */
+	static private string|null $api_key;
 
     /** @var Connection|false Connection instance */
     static private Connection|false $connection;
@@ -27,14 +29,14 @@ class Client
     /** @var string API path prefix to be added to store URL for requests */
 	static private string $path_prefix = '/api/v2';
 
-    /** @var string The OAuth client ID */
-    static private string $client_id;
+    /** @var string|null The OAuth client ID */
+    static private string|null $client_id;
 
     /** @var string The OAuth client secret */
 	static private string $client_secret;
 
-    /** @var string The OAuth Auth-Token */
-	static private string $auth_token;
+    /** @var string|null The OAuth Auth-Token */
+	static private string|null $auth_token;
 
     /** @var string The store hash */
 	static private string $store_hash;
