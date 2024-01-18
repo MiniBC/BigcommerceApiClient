@@ -1907,6 +1907,51 @@ class Client
 		return self::getCollection('/orderstatuses', 'OrderStatus');
 	}
 
+    /**
+     * Return a collection of shipping-zones
+     *
+     * @return array|string
+     * @return array|string
+     * @throws ClientError
+     * @throws NetworkError
+     * @throws ServerError
+     */
+    public static function getShippingZones() : array|string
+    {
+        return self::getCollection('/shipping/zones', 'ShippingZone');
+    }
+
+    /**
+     * Return a shipping-zone by id
+     *
+     * @param int $id shipping-zone id
+     * @return Resource|string
+     * @return array|string
+     * @throws ClientError
+     * @throws NetworkError
+     * @throws ServerError
+     */
+    public static function getShippingZone(int $id) : Resource|string
+    {
+        return self::getResource('/shipping/zones/' . $id, 'ShippingZone');
+    }
+
+
+    /**
+     * Delete the given shipping-zone
+     *
+     * @param int $id shipping-zone id
+     * @return mixed
+     * @return array|string
+     * @throws ClientError
+     * @throws NetworkError
+     * @throws ServerError
+     */
+    public static function deleteShippingZone(int $id) : mixed
+    {
+        return self::deleteResource('/shipping/zones/' . $id);
+    }
+
 	/**
 	 * Enabled shipping methods.
 	 *
@@ -1977,6 +2022,19 @@ class Client
 	{
 		return self::getCount('/products/skus/count');
 	}
+
+    /**
+     * Returns the googleproductsearch mapping for a product.
+     *
+     * @return Resource|string
+     * @throws ClientError
+     * @throws NetworkError
+     * @throws ServerError
+     */
+    public static function getGoogleProductSearch($productId) : Resource|string
+    {
+        return self::getResource('/products/' . $productId . '/googleproductsearch', 'ProductGoogleProductSearch');
+    }
 
 	/**
 	 * Get a single coupon by given id.
