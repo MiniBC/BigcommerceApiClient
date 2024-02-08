@@ -25,6 +25,10 @@ class Error extends \Exception
 
 				$message = $error;
 			}
+
+            if (property_exists($message, 'message')) {
+                $message = $message->message;
+            }
 		}
 		
 		parent::__construct($message, $code);
