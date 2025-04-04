@@ -286,7 +286,7 @@ class Client
 	 *
 	 * @param Connection|null $connection The connection to use
 	 */
-	public static function setConnection(Connection $connection = null)
+	public static function setConnection(?Connection $connection = null)
 	{
 		self::$connection = $connection;
 	}
